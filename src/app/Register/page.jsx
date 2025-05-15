@@ -290,82 +290,79 @@ export default function InternshipPortal() {
     setLoading(true);
     setErrors({});
 
-    try {
-      const data = new FormData();
+ try {
+  const payload = {
+    name: `${formData.firstName} ${formData.lastName}`.trim(),
+    email: formData.email,
+    username: formData.username,
+    password: formData.password,
+    duration: formData.duration,
+    tasks: formData.tasks,
+    university: formData.university,
+    department: formData.department,
+    phone: formData.phone,
+    address: formData.address,
+    startDate: formData.startDate,
+    endDate: formData.endDate,
+    dob: formData.dob,
+    domain: formData.domain,
+    gender: formData.gender,
+    emergencyContact: formData.emergencyContact,
+    linkedin: formData.linkedin,
+    // If you're not uploading files, these can be omitted or handled as URLs/strings if available
+    resume: null,
+    profilePic: null,
+  };
 
-      // Add required backend registration fields
-      data.append('name', `${formData.firstName} ${formData.lastName}`.trim());
-      data.append('email', formData.email);
-      data.append('username', formData.username);
-      data.append('password', formData.password);
-      data.append('duration', formData.duration);
-      data.append('tasks', formData.tasks);
-
-      // Add additional fields that might be useful
-      data.append('university', formData.university);
-      data.append('department', formData.department);
-      data.append('phone', formData.phone);
-      data.append('address', formData.address);
-      data.append('startDate', formData.startDate);
-      data.append('endDate', formData.endDate);
-
-      // Add files
-      if (formData.resume) {
-        data.append('resume', formData.resume);
+  const response = await axios.post(
+    'https://backend-internship-portal.vercel.app/api/interns',
+    payload,
+    {
+      headers: {
+        'Content-Type': 'application/json'
       }
+    }
+  );
 
-      if (formData.profilePic) {
-        data.append('profilePic', formData.profilePic);
-      }
+  console.log('Registration successful:', response.data);
+  setSuccess('Registration successful! Your application has been submitted. Redirecting to login page...');
 
-      // Send the registration request to backend
-      const response = await axios.post('https://backend-internship-portal.vercel.app/api/interns', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+  setFormData({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    phone: "",
+    address: "",
+    email: "",
+    university: "",
+    domain: "",
+    department: "",
+    gender: "",
+    emergencyContact: "",
+    linkedin: "",
+    profilePic: null,
+    resume: null,
+    startDate: "",
+    endDate: "",
+    name: "",
+    username: "",
+    password: "",
+    duration: 3,
+    tasks: ""
+  });
 
-      console.log('Registration successful:', response.data);
-      setSuccess('Registration successful! Your application has been submitted. Redirecting to login page...');
+  setPreviewImage("");
+  setResumeText("");
 
-      // Reset form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        dob: "",
-        phone: "",
-        address: "",
-        email: "",
-        university: "",
-        domain: "",
-        department: "",
-        gender: "",
-        emergencyContact: "",
-        linkedin: "",
-        profilePic: null,
-        resume: null,
-        startDate: "",
-        endDate: "",
-        name: "",
-        username: "",
-        password: "",
-        duration: 3,
-        tasks: ""
-      });
-      setPreviewImage("");
-      setResumeText("");
+  setTimeout(() => {
+    router.push('/Login');
+  }, 3000);
 
-      // Redirect to login after delay
-      setTimeout(() => {
-        router.push('/Login');
-      }, 3000);
-
-    } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({
-        submit: error.response?.data?.error || 'Registration failed. Please try again.'
-      });
-    } finally {
+} catch (error) {
+  console.error('Registration failed:', error);
+  setError('Registration failed. Please try again later.');
+}
+finally {
       setLoading(false);
     }
   };
