@@ -299,7 +299,7 @@ function InternDashboard() {
           <div className="mt-4 p-3 bg-gray-100 rounded text-gray-700 text-sm">
             <h4 className="font-medium">Debug Information:</h4>
             <p className="mt-1">API Status: {apiHealth}</p>
-            <p>Backend URL: http://localhost:5000</p>
+            
             <p>User Role: {user ? user.role || 'Not specified' : 'Not logged in'}</p>
           </div>
         </div>

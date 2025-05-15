@@ -504,7 +504,7 @@ finally {
 
                 <input
                   name="tasks"
-                  placeholder="Tasks (comma-separated)"
+                  placeholder="Previouse Experience"
                   className="w-full p-3 bg-gray-700 rounded-lg"
                   onChange={handleChange}
                   value={formData.tasks}
