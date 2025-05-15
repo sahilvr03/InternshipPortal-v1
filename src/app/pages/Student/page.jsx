@@ -26,7 +26,7 @@ function InternDashboard() {
   useEffect(() => {
     const checkApiHealth = async () => {
       try {
-        await axios.get('http://localhost:5000/health');
+        await axios.get('https://backend-internship-portal.vercel.app/health');
         setApiHealth('online');
       } catch (err) {
         console.error('API health check failed:', err);
@@ -58,7 +58,7 @@ function InternDashboard() {
         const headers = { Authorization: `Bearer ${token}` };
         console.log('Fetching student data for ID:', user.id);
 
-        const response = await axios.get(`http://localhost:5000/api/student/profile/${user.id}`, { headers });
+        const response = await axios.get(`https://backend-internship-portal.vercel.app/api/student/profile/${user.id}`, { headers });
         setStudentData(response.data);
         console.log('Student data retrieved successfully');
       } catch (err) {
@@ -108,7 +108,7 @@ function InternDashboard() {
 
       // Get student profile
       const profileResponse = await axios.get(
-        `http://localhost:5000/api/student/profile/${user.id}`,
+        `https://backend-internship-portal.vercel.app/api/student/profile/${user.id}`,
         { headers }
       );
 
@@ -122,7 +122,7 @@ function InternDashboard() {
 
           try {
             const projectResponse = await axios.get(
-              `http://localhost:5000/api/student/projects/${projectId}`,
+              `https://backend-internship-portal.vercel.app/api/student/projects/${projectId}`,
               { headers }
             );
             return projectResponse.data;
@@ -159,7 +159,7 @@ function InternDashboard() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:5000/api/student/feedback/${feedbackId}/mark-read`,
+        `https://backend-internship-portal.vercel.app/api/student/feedback/${feedbackId}/mark-read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -248,13 +248,13 @@ function InternDashboard() {
       setLoading(true);
 
       await axios.post(
-        `http://localhost:5000/api/student/progress/${projectId}`,
+        `https://backend-internship-portal.vercel.app/api/student/progress/${projectId}`,
         { content: progressUpdate },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       // Refresh data after posting update
-      const response = await axios.get(`http://localhost:5000/api/student/profile/${user.id}`, {
+      const response = await axios.get(`https://backend-internship-portal.vercel.app/api/student/profile/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

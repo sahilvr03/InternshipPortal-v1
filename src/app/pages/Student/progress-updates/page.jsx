@@ -26,7 +26,7 @@ export default function ProgressUpdates() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/progress-updates', {
+        const response = await axios.get('https://backend-internship-portal.vercel.app/api/progress-updates', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setPreviousUpdates(response.data);
@@ -57,7 +57,7 @@ export default function ProgressUpdates() {
       
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/progress-updates',
+        'https://backend-internship-portal.vercel.app/api/progress-updates',
         { content: progressUpdate },
         { headers: { Authorization: `Bearer ${token}` } }
       );
