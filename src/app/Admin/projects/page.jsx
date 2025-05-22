@@ -9,6 +9,14 @@ import {
   faClipboardList, faEdit, faTrash, faPlus, faCheckCircle, faTimesCircle, 
   faExclamationTriangle, faProjectDiagram
 } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 function ProjectsManagement() {
   const { user } = useAuth();
@@ -27,28 +35,28 @@ function ProjectsManagement() {
     assignedTo: []
   });
 
-  const fetchWithAuth = async (url, options = {}) => {
+  const axiosWithAuth = async (config) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Request failed');
+    try {
+      const response = await axiosInstance({
+        ...config,
+        headers: {
+          ...config.headers,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Request failed');
     }
-    
-    return await response.json();
   };
 
   const fetchProjects = async () => {
     try {
-      const data = await fetchWithAuth('https://backend-internship-portal.vercel.app/api/admin/projects');
+      const data = await axiosWithAuth({
+        method: 'get',
+        url: '/api/admin/projects',
+      });
       setProjects(data);
     } catch (error) {
       setError(error.message);
@@ -56,13 +64,17 @@ function ProjectsManagement() {
   };
 
   const fetchInterns = async () => {
-    try {
-      const data = await fetchWithAuth('https://backend-internship-portal.vercel.app/api/interns');
-      setInterns(data);
-    } catch (error) {
-      console.error('Error fetching interns:', error);
-    }
-  };
+  try {
+    const data = await axiosWithAuth({
+      method: 'get',
+      url: '/api/interns',
+    });
+    setInterns(data);
+  } catch (error) {
+    console.error('Error fetching interns:', error);
+    setError(error.message);
+  }
+};
 
   useEffect(() => {
     const loadData = async () => {
@@ -98,37 +110,50 @@ function ProjectsManagement() {
     }
   };
 
-  const handleAddProject = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const response = await fetchWithAuth('https://backend-internship-portal.vercel.app/api/admin/projects', {
-        method: 'POST',
-        body: JSON.stringify(newProject)
-      });
-      
-      setProjects([...projects, response.project]);
-      setShowAddProjectForm(false);
-      setNewProject({
-        title: '',
-        description: '',
-        status: 'Not Started',
-        assignedTo: []
-      });
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleAddProject = async (e) => {
+  e.preventDefault();
+  try {
+    setLoading(true);
+    // Map intern IDs to student IDs
+    const assignedToStudentIds = await Promise.all(
+      newProject.assignedTo.map(async (internId) => {
+        const internResponse = await axiosWithAuth({
+          method: 'get',
+          url: `/api/interns/${internId}`,
+        });
+        return internResponse.student?._id || null;
+      })
+    );
+    // Filter out any null values
+    const validStudentIds = assignedToStudentIds.filter(id => id);
+    const projectData = {
+      ...newProject,
+      assignedTo: validStudentIds,
+    };
+    const response = await axiosWithAuth({
+      method: 'post',
+      url: '/api/admin/projects',
+      data: projectData,
+    });
+    setProjects([...projects, response.project]);
+    setShowAddProjectForm(false);
+    setNewProject({ title: '', description: '', status: 'Not Started', assignedTo: [] });
+  } catch (error) {
+    console.error('Error adding project:', error);
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDeleteProject = async (projectId) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
     
     try {
       setLoading(true);
-      await fetchWithAuth(`https://backend-internship-portal.vercel.app/api/admin/projects/${projectId}`, {
-        method: 'DELETE'
+      await axiosWithAuth({
+        method: 'delete',
+        url: `/api/admin/projects/${projectId}`,
       });
       
       setProjects(projects.filter(p => p._id !== projectId));
@@ -145,9 +170,10 @@ function ProjectsManagement() {
   const handleUpdateProjectStatus = async (projectId, newStatus) => {
     try {
       setLoading(true);
-      await fetchWithAuth(`https://backend-internship-portal.vercel.app/api/admin/projects/${projectId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: newStatus })
+      await axiosWithAuth({
+        method: 'put',
+        url: `/api/admin/projects/${projectId}`,
+        data: { status: newStatus },
       });
       
       setProjects(projects.map(p => 
@@ -169,11 +195,10 @@ function ProjectsManagement() {
       if (!projectFeedback.trim()) return;
       
       setLoading(true);
-      await fetchWithAuth(`https://backend-internship-portal.vercel.app/api/admin/projects/${selectedProject._id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ 
-          feedback: projectFeedback 
-        })
+      await axiosWithAuth({
+        method: 'put',
+        url: `/api/admin/projects/${selectedProject._id}`,
+        data: { feedback: projectFeedback },
       });
       
       const updatedFeedback = [

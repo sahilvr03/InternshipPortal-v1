@@ -4,14 +4,18 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import RouteGuard from '../../components/RouteGuard';
-import Navbar from "../../components/navbar";
-import Sidebar from "../../components/sidebar";
+import Navbar from '../../components/navbar';
+import Sidebar from '../../components/sidebar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faHistory, faClipboardList, faCalendarCheck, 
+  faHistory, faClipboardList, faCalendarCheck,
   faUserEdit, faProjectDiagram, faBell,
-  faReply, faCheckCircle, faTimesCircle, faSpinner
+  faReply, faCheckCircle, faTimesCircle, faSpinner, faTrash, faSearch
 } from '@fortawesome/free-solid-svg-icons';
+
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_URL,
+});
 
 function ActivitiesPage() {
   const { user } = useAuth();
@@ -27,51 +31,42 @@ function ActivitiesPage() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('date-desc');
 
-  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-
         if (!token) {
           setError('Authentication token not found');
-          setLoading(false);
           return;
         }
 
-        // Get projects data
-        const projectsResponse = await axios.get('https://backend-internship-portal.vercel.app/api/admin/projects', {
+        const projectsResponse = await axiosInstance.get('/api/admin/projects', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProjects(projectsResponse.data || []);
 
-        // Get interns data to gather attendance and progress updates
-        const internsResponse = await axios.get('https://backend-internship-portal.vercel.app/api/interns', {
+        const internsResponse = await axiosInstance.get('/api/interns', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setInterns(internsResponse.data || []);
 
-        // Get all progress updates directly (improved endpoint)
-        const progressResponse = await axios.get('https://backend-internship-portal.vercel.app/api/admin/progress-updates', {
+        const progressResponse = await axiosInstance.get('/api/admin/progress-updates', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
         const formattedProgressUpdates = progressResponse.data.map(update => ({
           ...update,
           type: 'progress',
           title: `Progress update from ${update.studentName || 'Student'}`,
           date: update.date || update.timestamp || update.createdAt
         }));
-
         setProgressUpdates(formattedProgressUpdates);
 
-        // Extract attendance records from all interns
         const allAttendance = [];
-
         internsResponse.data.forEach(intern => {
-          // Add attendance records with intern name
           if (intern.attendance && intern.attendance.length > 0) {
             intern.attendance.forEach(record => {
               allAttendance.push({
@@ -85,10 +80,8 @@ function ActivitiesPage() {
             });
           }
         });
+        setAttendanceRecords(allAttendance);
 
-        setAttendanceRecords(allAttendance.sort((a, b) => new Date(b.date) - new Date(a.date)));
-
-        // Combine all activities and sort by date
         const combinedActivities = [
           ...projectsResponse.data.map(project => ({
             type: 'project',
@@ -101,43 +94,29 @@ function ActivitiesPage() {
           ...allAttendance,
           ...formattedProgressUpdates
         ];
-
-        // Sort by date (most recent first)
-        combinedActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
         setActivities(combinedActivities);
-
         setError(null);
       } catch (error) {
-        console.error('Error fetching activity data:', error);
         setError(error.response?.data?.message || 'Failed to load activities');
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // Format date helper function
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-
     const now = new Date();
     const date = new Date(dateString);
-    
-    // If today, show time
     if (date.toDateString() === now.toDateString()) {
       return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
-    
-    // If yesterday, show "Yesterday"
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     if (date.toDateString() === yesterday.toDateString()) {
       return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
-    
-    // Otherwise show date
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -147,51 +126,67 @@ function ActivitiesPage() {
     });
   };
 
-  // Handle providing feedback for a progress update
   const handleSubmitFeedback = async () => {
-    if (!feedbackText.trim() || !selectedProgressUpdate) return;
-
+    if (!feedbackText.trim() || !selectedProgressUpdate) {
+      setError('Feedback cannot be empty');
+      return;
+    }
     try {
       setSubmittingFeedback(true);
       const token = localStorage.getItem('token');
-
-      // Send feedback to the server
-      await axios.post(
-        `https://backend-internship-portal.vercel.app/api/admin/progress-updates/${selectedProgressUpdate._id}/feedback`,
+      await axiosInstance.post(
+        `/api/admin/progress-updates/${selectedProgressUpdate._id}/feedback`,
         { feedback: feedbackText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Update the progress update in state with the new feedback
-      const updatedProgressUpdates = progressUpdates.map(update => 
+      const updatedProgressUpdates = progressUpdates.map(update =>
         update._id === selectedProgressUpdate._id
           ? { ...update, feedback: feedbackText, hasAdminFeedback: true }
           : update
       );
       setProgressUpdates(updatedProgressUpdates);
-
-      // Also update in activities array
-      const updatedActivities = activities.map(activity => 
+      const updatedActivities = activities.map(activity =>
         activity.type === 'progress' && activity._id === selectedProgressUpdate._id
           ? { ...activity, feedback: feedbackText, hasAdminFeedback: true }
           : activity
       );
       setActivities(updatedActivities);
-
-      // Clear form and close modal
       setFeedbackText('');
       setShowFeedbackModal(false);
       setSelectedProgressUpdate(null);
-
+      setError(null);
     } catch (error) {
-      console.error('Error submitting feedback:', error);
-      alert('Failed to submit feedback. Please try again.');
+      setError('Failed to submit feedback');
     } finally {
       setSubmittingFeedback(false);
     }
   };
 
-  // Get status class for styling
+  const handleDeleteActivity = async (activity) => {
+    if (!confirm(`Are you sure you want to delete this ${activity.type} activity?`)) return;
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (activity.type === 'progress') {
+        await axiosInstance.delete(`/api/admin/progress-updates/${activity._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setProgressUpdates(progressUpdates.filter(u => u._id !== activity._id));
+        setActivities(activities.filter(a => a._id !== activity._id));
+      } else if (activity.type === 'attendance') {
+        await axiosInstance.delete(`/api/admin/attendance/${activity.internId}/${activity._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setAttendanceRecords(attendanceRecords.filter(a => a._id !== activity._id));
+        setActivities(activities.filter(a => a._id !== activity._id));
+      }
+    } catch (error) {
+      setError('Failed to delete activity');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusClass = (status) => {
     switch (status) {
       case 'Completed':
@@ -213,7 +208,6 @@ function ActivitiesPage() {
     }
   };
 
-  // Get icon for activity type
   const getActivityIcon = (type) => {
     switch (type) {
       case 'project':
@@ -227,12 +221,31 @@ function ActivitiesPage() {
     }
   };
 
-  // Open feedback modal for a progress update
   const openFeedbackModal = (progressUpdate) => {
     setSelectedProgressUpdate(progressUpdate);
     setFeedbackText(progressUpdate.feedback || '');
     setShowFeedbackModal(true);
   };
+
+  // Filter and sort activities
+  const filteredActivities = activities
+    .filter(activity => activeTab === 'all' || activity.type === activeTab)
+    .filter(activity =>
+      activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (activity.type === 'progress' && activity.content?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (activity.type === 'attendance' && activity.notes?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (activity.type === 'project' && activity.data?.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (sortBy === 'date-desc') {
+        return new Date(b.date) - new Date(a.date);
+      } else if (sortBy === 'date-asc') {
+        return new Date(a.date) - new Date(b.date);
+      } else if (sortBy === 'type') {
+        return a.type.localeCompare(b.type);
+      }
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -259,11 +272,6 @@ function ActivitiesPage() {
     );
   }
 
-  // Filter activities based on active tab
-  const filteredActivities = activeTab === 'all' 
-    ? activities
-    : activities.filter(activity => activity.type === activeTab);
-
   return (
     <div className="min-h-screen bg-gray-100 flex">
       <Sidebar />
@@ -284,47 +292,68 @@ function ActivitiesPage() {
                     <FontAwesomeIcon icon={faHistory} className="mr-2 text-gray-600" />
                     System Activities
                   </h2>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => setActiveTab('all')}
-                      className={`px-3 py-1 rounded-md text-sm ${
-                        activeTab === 'all' 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
+                  <div className="flex items-center space-x-4">
+                    <div className="relative w-64">
+                      <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search activities..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      All
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('project')}
-                      className={`px-3 py-1 rounded-md text-sm ${
-                        activeTab === 'project' 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
-                    >
-                      Projects
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('attendance')}
-                      className={`px-3 py-1 rounded-md text-sm ${
-                        activeTab === 'attendance' 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
-                    >
-                      Attendance
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('progress')}
-                      className={`px-3 py-1 rounded-md text-sm ${
-                        activeTab === 'progress' 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
-                    >
-                      Progress Updates
-                    </button>
+                      <option value="date-desc">Sort by Date (Newest)</option>
+                      <option value="date-asc">Sort by Date (Oldest)</option>
+                      <option value="type">Sort by Type</option>
+                    </select>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setActiveTab('all')}
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          activeTab === 'all'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
+                      >
+                        All
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('project')}
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          activeTab === 'project'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
+                      >
+                        Projects
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('attendance')}
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          activeTab === 'attendance'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
+                      >
+                        Attendance
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('progress')}
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          activeTab === 'progress'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
+                      >
+                        Progress Updates
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -334,8 +363,8 @@ function ActivitiesPage() {
                       <div key={index} className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r-lg shadow-sm hover:shadow">
                         <div className="flex items-start">
                           <div className="bg-blue-100 p-2 rounded-full mr-4">
-                            <FontAwesomeIcon 
-                              icon={getActivityIcon(activity.type)} 
+                            <FontAwesomeIcon
+                              icon={getActivityIcon(activity.type)}
                               className="text-blue-600"
                             />
                           </div>
@@ -349,13 +378,22 @@ function ActivitiesPage() {
                                   </span>
                                 )}
                               </h3>
-                              <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
+                                {(activity.type === 'progress' || activity.type === 'attendance') && (
+                                  <button
+                                    onClick={() => handleDeleteActivity(activity)}
+                                    className="text-red-500 hover:text-red-600"
+                                    title="Delete activity"
+                                  >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            
                             {activity.type === 'progress' && (
                               <div>
                                 <p className="mt-1 text-sm text-gray-600">{activity.content}</p>
-                                
                                 <div className="mt-2 flex justify-between items-center">
                                   <div>
                                     {activity.hasAdminFeedback || activity.feedback ? (
@@ -369,7 +407,6 @@ function ActivitiesPage() {
                                       </span>
                                     )}
                                   </div>
-                                  
                                   <button
                                     onClick={() => openFeedbackModal(activity)}
                                     className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200"
@@ -378,7 +415,6 @@ function ActivitiesPage() {
                                     {activity.hasAdminFeedback || activity.feedback ? 'Edit Feedback' : 'Provide Feedback'}
                                   </button>
                                 </div>
-                                
                                 {(activity.hasAdminFeedback || activity.feedback) && (
                                   <div className="mt-2 p-2 bg-white rounded border border-gray-200">
                                     <p className="text-xs font-medium text-gray-500">Your feedback:</p>
@@ -387,18 +423,14 @@ function ActivitiesPage() {
                                 )}
                               </div>
                             )}
-                            
                             {activity.type === 'attendance' && (
                               <p className="mt-1 text-sm text-gray-600">
                                 {activity.notes || `Marked by: ${activity.markedBy || 'Admin'}`}
                               </p>
                             )}
-                            
                             {activity.type === 'project' && activity.data && activity.data.description && (
                               <p className="mt-1 text-sm text-gray-600">
-                                {activity.data.description.length > 100 
-                                  ? `${activity.data.description.substring(0, 100)}...` 
-                                  : activity.data.description}
+                                {activity.data.description}
                               </p>
                             )}
                           </div>
@@ -406,90 +438,77 @@ function ActivitiesPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <FontAwesomeIcon icon={faClipboardList} className="text-3xl mb-2" />
-                      <p>No {activeTab === 'all' ? 'recent activities' : activeTab} found</p>
+                    <div className="text-center py-8">
+                      <FontAwesomeIcon icon={faClipboardList} className="text-gray-400 text-4xl mb-4" />
+                      <p className="text-gray-600">No activities found for the selected filters.</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
+
+            {/* Feedback Modal */}
+            {showFeedbackModal && selectedProgressUpdate && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold">Provide Feedback</h2>
+                    <button
+                      onClick={() => setShowFeedbackModal(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <FontAwesomeIcon icon={faTimesCircle} size="lg" />
+                    </button>
+                  </div>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600">
+                      <strong>Progress Update:</strong> {selectedProgressUpdate.content}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Submitted by {selectedProgressUpdate.studentName} on {formatDate(selectedProgressUpdate.date)}
+                    </p>
+                  </div>
+                  <textarea
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    placeholder="Enter your feedback here..."
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    rows="5"
+                  />
+                  {error && (
+                    <div className="mt-2 text-red-500 text-sm">{error}</div>
+                  )}
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => setShowFeedbackModal(false)}
+                      className="bg-gray-500 text-white px-4 py-2 rounded-lg mr-2 hover:bg-gray-600"
+                      disabled={submittingFeedback}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitFeedback}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
+                      disabled={submittingFeedback}
+                    >
+                      {submittingFeedback ? (
+                        <>
+                          <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                          Submit Feedback
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
-
-        {/* Feedback Modal */}
-        {showFeedbackModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Provide Feedback on Progress Update
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowFeedbackModal(false);
-                    setSelectedProgressUpdate(null);
-                    setFeedbackText('');
-                  }}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <FontAwesomeIcon icon={faTimesCircle} size="lg" />
-                </button>
-              </div>
-              
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-gray-800 font-medium">Student Update:</p>
-                <p className="text-sm text-gray-600">{selectedProgressUpdate?.content}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  From: {selectedProgressUpdate?.studentName || 'Student'} - {formatDate(selectedProgressUpdate?.date)}
-                </p>
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="feedback" className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Feedback:
-                </label>
-                <textarea
-                  id="feedback"
-                  rows="4"
-                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  placeholder="Provide constructive feedback to the student..."
-                  value={feedbackText}
-                  onChange={(e) => setFeedbackText(e.target.value)}
-                ></textarea>
-              </div>
-              
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowFeedbackModal(false);
-                    setSelectedProgressUpdate(null);
-                    setFeedbackText('');
-                  }}
-                  className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmitFeedback}
-                  disabled={!feedbackText.trim() || submittingFeedback}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {submittingFeedback ? (
-                    <>
-                      <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>Submit Feedback</>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

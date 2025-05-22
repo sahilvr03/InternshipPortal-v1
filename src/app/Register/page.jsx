@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
@@ -86,29 +87,23 @@ export default function InternshipPortal() {
     lastName: "",
     dob: "",
     phone: "",
-    address: "",
     email: "",
     university: "",
     domain: "",
     department: "",
-    gender: "",
-    emergencyContact: "",
     linkedin: "",
     profilePic: null,
     resume: null,
-    startDate: "",
-    endDate: "",
     name: "",
     username: "",
     password: "",
-    duration: 3,
-    tasks: ""
+    weeks: 4 // Default to 4 weeks
   });
 
   const universities = ["Karachi University", "IBA Karachi", "NED University", "FAST Karachi", "SZABIST Karachi", "LUMS", "UET Lahore", "GIKI", "NUST", "COMSATS Islamabad", "UET Peshawar", "UET Taxila", "UET Faisalabad", "UET Gujranwala"];
   const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development", "Data Science"];
   const departments = ["Computer Science", "Software Engineering", "Information Technology", "Data Engineering"];
-  const genders = ["Male", "Female", "Other"];
+  const weeksOptions = [4, 5, 6, 7, 8, 9, 10, 11, 12]; // Internship duration options
 
   // Validate Pakistani phone number (03XXXXXXXXX)
   const validatePakistaniNumber = (number) => {
@@ -122,7 +117,6 @@ export default function InternshipPortal() {
 
   // Validate LinkedIn URL
   const validateLinkedIn = (url) => {
-    if (!url) return true;
     return /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+\/?$/.test(url);
   };
 
@@ -158,35 +152,10 @@ export default function InternshipPortal() {
         const fullName = name === 'firstName'
           ? `${value} ${formData.lastName}`
           : `${formData.firstName} ${value}`;
-
         setFormData(prev => ({
           ...prev,
           name: fullName.trim()
         }));
-      }
-
-      if (name === 'startDate' || name === 'endDate') {
-        if (formData.startDate && formData.endDate) {
-          let start = new Date(formData.startDate);
-          let end = new Date(formData.endDate);
-
-          if (name === 'startDate') {
-            start = new Date(value);
-          } else {
-            end = new Date(value);
-          }
-
-          if (start && end && start < end) {
-            const diffTime = Math.abs(end - start);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const months = Math.ceil(diffDays / 30);
-
-            setFormData(prev => ({
-              ...prev,
-              duration: months
-            }));
-          }
-        }
       }
     }
   };
@@ -205,23 +174,19 @@ export default function InternshipPortal() {
 
       for (const file of acceptedFiles) {
         if (file.type.startsWith("image/")) {
-          // Validate image size (max 2MB)
           if (file.size > 2 * 1024 * 1024) {
             toast.error("Profile picture should be less than 2MB");
             continue;
           }
-
           const imageUrl = URL.createObjectURL(file);
           setPreviewImage(imageUrl);
           setFormData(prev => ({ ...prev, profilePic: file }));
         }
         else if (file.type === "application/pdf") {
-          // Validate PDF size (max 5MB)
           if (file.size > 5 * 1024 * 1024) {
             toast.error("Resume should be less than 5MB");
             continue;
           }
-
           setFormData(prev => ({ ...prev, resume: file }));
           setResumeText(`File selected: ${file.name}`);
         }
@@ -268,9 +233,25 @@ export default function InternshipPortal() {
       }
 
       // LinkedIn validation
-      if (formData.linkedin && !validateLinkedIn(formData.linkedin)) {
+      if (!formData.linkedin) {
+        stepErrors.linkedin = "LinkedIn Profile URL is required";
+        isValid = false;
+      } else if (!validateLinkedIn(formData.linkedin)) {
         stepErrors.linkedin = "Invalid LinkedIn URL format";
         isValid = false;
+      }
+
+      // DOB validation
+      if (!formData.dob) {
+        stepErrors.dob = "Date of Birth is required";
+        isValid = false;
+      } else {
+        const dob = new Date(formData.dob);
+        const today = new Date();
+        if (dob > today) {
+          stepErrors.dob = "Date of Birth cannot be in the future";
+          isValid = false;
+        }
       }
     }
 
@@ -283,29 +264,9 @@ export default function InternshipPortal() {
         stepErrors.domain = "Domain is required";
         isValid = false;
       }
-      if (!formData.startDate) {
-        stepErrors.dates = "Start date is required";
+      if (!formData.weeks) {
+        stepErrors.weeks = "Please select internship duration";
         isValid = false;
-      }
-      if (!formData.endDate) {
-        stepErrors.dates = "End date is required";
-        isValid = false;
-      }
-
-      if (formData.startDate && formData.endDate) {
-        const start = new Date(formData.startDate);
-        const end = new Date(formData.endDate);
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 28) {
-          stepErrors.dates = "Minimum internship duration is 4 weeks";
-          isValid = false;
-        }
-        if (start > end) {
-          stepErrors.dates = "End date must be after start date";
-          isValid = false;
-        }
       }
     }
 
@@ -316,7 +277,6 @@ export default function InternshipPortal() {
   };
 
   const validateUpToStep = (targetStep) => {
-    // Validate all steps up to the target step
     for (let i = 1; i < targetStep; i++) {
       if (!validateStep(i)) {
         return false;
@@ -327,7 +287,6 @@ export default function InternshipPortal() {
 
   const handleNext = () => {
     if (!validateStep(step)) {
-      // Scroll to the first error
       const firstError = Object.keys(errors)[0];
       if (firstError) {
         document.getElementsByName(firstError)[0]?.scrollIntoView({
@@ -341,16 +300,13 @@ export default function InternshipPortal() {
   };
 
   const handleStepChange = (targetStep) => {
-    // Allow going back without validation
     if (targetStep < step) {
       setStep(targetStep);
       return;
     }
 
-    // Prevent going forward if previous steps are incomplete
     if (!validateUpToStep(targetStep)) {
       toast.error(`Please complete all required fields in Step ${step} before proceeding.`);
-      // Scroll to the first error in the current step
       const firstError = Object.keys(errors)[0];
       if (firstError) {
         document.getElementsByName(firstError)[0]?.scrollIntoView({
@@ -361,7 +317,6 @@ export default function InternshipPortal() {
       return;
     }
 
-    // Validate the current step before moving to the target step
     if (targetStep > step && !validateStep(step)) {
       toast.error(`Please complete all required fields in Step ${step} before proceeding.`);
       const firstError = Object.keys(errors)[0];
@@ -399,20 +354,17 @@ export default function InternshipPortal() {
     setLoading(true);
 
     try {
-      // Generate username and password
       const generatedUsername = formData.firstName.toLowerCase().replace(/\s+/g, '') +
         Math.floor(Math.random() * 1000);
       const randomPassword = Math.random().toString(36).slice(-8) +
         Math.floor(Math.random() * 10);
 
-      // Update formData with generated credentials
       setFormData(prev => ({
         ...prev,
         username: generatedUsername,
         password: randomPassword
       }));
 
-      // Store credentials for download
       setCredentials({ username: generatedUsername, password: randomPassword });
 
       const payload = {
@@ -420,18 +372,12 @@ export default function InternshipPortal() {
         email: formData.email,
         username: generatedUsername,
         password: randomPassword,
-        duration: formData.duration,
-        tasks: formData.tasks,
+        duration: Math.round(formData.weeks / 4), // Convert weeks to months for internSchema
         university: formData.university,
         department: formData.department,
         phone: formData.phone,
-        address: formData.address,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
         dob: formData.dob,
         domain: formData.domain,
-        gender: formData.gender,
-        emergencyContact: formData.emergencyContact,
         linkedin: formData.linkedin,
         resume: formData.resume ? formData.resume.name : null,
         profilePic: formData.profilePic ? formData.profilePic.name : null,
@@ -453,34 +399,26 @@ export default function InternshipPortal() {
         throw new Error(errorData.message || 'Registration failed. Please try again later.');
       }
 
-      const data = await response.json();
       toast.success('Registration successful!', { autoClose: 5000 });
       setSuccess('Your application has been submitted successfully.');
       setShowDownloadModal(true);
 
-      // Reset form
       setFormData({
         firstName: "",
         lastName: "",
         dob: "",
         phone: "",
-        address: "",
         email: "",
         university: "",
         domain: "",
         department: "",
-        gender: "",
-        emergencyContact: "",
         linkedin: "",
         profilePic: null,
         resume: null,
-        startDate: "",
-        endDate: "",
         name: "",
         username: "",
         password: "",
-        duration: 3,
-        tasks: ""
+        weeks: 4
       });
 
       setPreviewImage("");
@@ -539,62 +477,29 @@ export default function InternshipPortal() {
                   />
                   {errors.lastName && <span className="text-red-400 text-sm">{errors.lastName}</span>}
                 </div>
-
-             <div className="relative">
+                <div>
                   <input
                     type="date"
                     name="dob"
-                    id="dob"
-                    className="w-full p-3 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white-100 "
+                    placeholder="Date of Birth *"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.dob}
                     max={new Date().toISOString().split('T')[0]}
                   />
-                  <span
-                    className={`absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none transition-opacity duration-200 ${formData.dob ? 'opacity-0' : 'opacity-100'}`}
-                  >
-                    Date of Birth
-                  </span>
+                  {errors.dob && <span className="text-red-400 text-sm">{errors.dob}</span>}
                 </div>
-
-                <div>
-                  <select
-                    name="gender"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
-                    onChange={handleChange}
-                    value={formData.gender}
-                  >
-                    <option value="">Select Gender</option>
-                    {genders.map(gender => (
-                      <option key={gender} value={gender}>{gender}</option>
-                    ))}
-                  </select>
-                </div>
-
                 <div>
                   <input
                     name="phone"
                     placeholder="Phone Number (03XXXXXXXXX) *"
-                    className="w-full p-3 bg-gray-700 rounded-lg
-                    rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg"
                     onChange={handleChange}
                     value={formData.phone}
                     maxLength={11}
                   />
                   {errors.phone && <span className="text-red-400 text-sm">{errors.phone}</span>}
                 </div>
-
-                <div>
-                  <input
-                    name="emergencyContact"
-                    placeholder="Emergency Contact"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
-                    onChange={handleChange}
-                    value={formData.emergencyContact}
-                    maxLength={11}
-                  />
-                </div>
-
                 <div>
                   <input
                     type="email"
@@ -606,24 +511,14 @@ export default function InternshipPortal() {
                   />
                   {errors.email && <span className="text-red-400 text-sm">{errors.email}</span>}
                 </div>
-
                 <div>
                   <input
-                    name="address"
-                    placeholder="Address"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
-                    onChange={handleChange}
-                    value={formData.address}
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <input
                     name="linkedin"
-                    placeholder="LinkedIn Profile URL (optional)"
+                    placeholder="LinkedIn Profile URL *"
                     className="w-full p-3 bg-gray-700 rounded-lg"
                     onChange={handleChange}
                     value={formData.linkedin}
+                    required
                   />
                   {errors.linkedin && <span className="text-red-400 text-sm">{errors.linkedin}</span>}
                 </div>
@@ -673,88 +568,20 @@ export default function InternshipPortal() {
                     ))}
                   </select>
                 </div>
-
                 <div>
-                  <input
-                    name="tasks"
-                    placeholder="Previous Experience/Projects"
+                  <select
+                    name="weeks"
                     className="w-full p-3 bg-gray-700 rounded-lg"
                     onChange={handleChange}
-                    value={formData.tasks}
-                  />
+                    value={formData.weeks}
+                  >
+                    <option value="">Select Internship Duration (Weeks) *</option>
+                    {weeksOptions.map(week => (
+                      <option key={week} value={week}>{week} Weeks</option>
+                    ))}
+                  </select>
+                  {errors.weeks && <span className="text-red-400 text-sm">{errors.weeks}</span>}
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Start Date *</label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full p-3 bg-gray-700 rounded-lg"
-                    onChange={(e) => {
-                      setFormData({ ...formData, startDate: e.target.value });
-                      if (formData.endDate) {
-                        const start = new Date(e.target.value);
-                        const end = new Date(formData.endDate);
-                        const diffTime = Math.abs(end - start);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                        if (diffDays < 28) {
-                          const minEndDate = new Date(start);
-                          minEndDate.setDate(minEndDate.getDate() + 28);
-                          setFormData({
-                            ...formData,
-                            startDate: e.target.value,
-                            endDate: minEndDate.toISOString().split('T')[0]
-                          });
-                        }
-
-                        const months = Math.ceil(diffDays / 30);
-                        setFormData(prev => ({
-                          ...prev,
-                          duration: months
-                        }));
-                      }
-                    }}
-                    value={formData.startDate}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">End Date *</label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    min={formData.startDate
-                      ? new Date(new Date(formData.startDate).getTime() + 28 * 24 * 60 * 60 * 1000)
-                        .toISOString().split('T')[0]
-                      : new Date().toISOString().split('T')[0]}
-                    className="w-full p-3 bg-gray-700 rounded-lg"
-                    onChange={(e) => {
-                      setFormData({ ...formData, endDate: e.target.value });
-
-                      if (formData.startDate) {
-                        const start = new Date(formData.startDate);
-                        const end = new Date(e.target.value);
-                        const diffTime = Math.abs(end - start);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                        const months = Math.ceil(diffDays / 30);
-                        setFormData(prev => ({
-                          ...prev,
-                          duration: months
-                        }));
-                      }
-                    }}
-                    value={formData.endDate}
-                  />
-                </div>
-
-                {errors.dates && (
-                  <div className="col-span-2 text-red-400 text-sm">
-                    {errors.dates}
-                  </div>
-                )}
               </div>
             )}
 
@@ -764,7 +591,6 @@ export default function InternshipPortal() {
                   <input {...getInputProps()} />
                   <p className="text-gray-300">Drag & drop profile picture (max 2MB) and resume (max 5MB) here, or click to select</p>
                   <p className="text-xs text-gray-400 mt-2">Accepted: JPG, PNG, PDF</p>
-
                   {previewImage && (
                     <div className="mt-4">
                       <Image width={200} height={200} src={previewImage} alt="Profile Preview" className="w-32 h-32 rounded-full mx-auto object-cover" />
@@ -788,24 +614,20 @@ export default function InternshipPortal() {
                     <p><span className="text-gray-400">Name:</span> {formData.firstName} {formData.lastName}</p>
                     <p><span className="text-gray-400">Email:</span> {formData.email}</p>
                     <p><span className="text-gray-400">Phone:</span> {formData.phone}</p>
-                    <p><span className="text-gray-400">Address:</span> {formData.address || 'Not provided'}</p>
-                    <p><span className="text-gray-400">Gender:</span> {formData.gender || 'Not specified'}</p>
                     <p><span className="text-gray-400">DOB:</span> {formData.dob || 'Not provided'}</p>
+                    <p><span className="text-gray-400">LinkedIn:</span> {formData.linkedin}</p>
                   </div>
                   <div className="bg-gray-700 p-4 rounded-lg">
                     <h3 className="font-bold mb-2">Education Information</h3>
                     <p><span className="text-gray-400">University:</span> {formData.university || 'Not selected'}</p>
                     <p><span className="text-gray-400">Department:</span> {formData.department || 'Not selected'}</p>
                     <p><span className="text-gray-400">Domain:</span> {formData.domain || 'Not selected'}</p>
-                    <p><span className="text-gray-400">Experience:</span> {formData.tasks || 'Not provided'}</p>
                   </div>
                 </div>
 
                 <div className="bg-gray-700 p-4 rounded-lg">
                   <h3 className="font-bold mb-2">Internship Details</h3>
-                  <p><span className="text-gray-400">Duration:</span> {formData.duration} months</p>
-                  <p><span className="text-gray-400">Period:</span> {formData.startDate || 'Not set'} to {formData.endDate || 'Not set'}</p>
-                  <p><span className="text-gray-400">LinkedIn:</span> {formData.linkedin || 'Not provided'}</p>
+                  <p><span className="text-gray-400">Duration:</span> {formData.weeks} weeks</p>
                 </div>
 
                 <div className="bg-gray-700 p-4 rounded-lg">
@@ -872,7 +694,6 @@ export default function InternshipPortal() {
         </div>
       </div>
 
-      {/* Download Credentials Modal */}
       {showDownloadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">

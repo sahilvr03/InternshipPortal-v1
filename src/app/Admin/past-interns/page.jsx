@@ -13,6 +13,10 @@ import {
   faChartLine, faTasks, faCertificate,  faProjectDiagram
 } from '@fortawesome/free-solid-svg-icons';
 
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_URL,
+});
+
 function PastInternsManagement() {
   const { user } = useAuth();
   const [pastInterns, setPastInterns] = useState([]);
@@ -28,7 +32,7 @@ function PastInternsManagement() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get('https://backend-internship-portal.vercel.app/api/interns/past', {
+        const response = await axiosInstance.get('/api/interns/past', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -82,7 +86,7 @@ function PastInternsManagement() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`https://backend-internship-portal.vercel.app/api/interns/past/${internId}`, {
+      const response = await axiosInstance.get(`/api/interns/past/${internId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -196,7 +200,7 @@ function PastInternsManagement() {
                                 <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                                   {intern.student?.profilePicture ? (
                                     <img 
-                                      src={`https://backend-internship-portal.vercel.app/uploads/${intern.student.profilePicture}`} 
+                                      src={`http://localhost:8000/uploads/${intern.student.profilePicture}`} 
                                       alt={intern.name}
                                       className="h-full w-full object-cover"
                                     />
@@ -459,7 +463,7 @@ function PastInternsManagement() {
                                 {project.attachments.map((file, idx) => (
                                   <a 
                                     key={idx}
-                                    href={`https://backend-internship-portal.vercel.app/uploads/${file.filePath}`}
+                                    href={`http://localhost:8000/uploads/${file.filePath}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-blue-600 hover:underline flex items-center"

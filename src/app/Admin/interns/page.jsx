@@ -29,6 +29,9 @@ import {
 
 // Dynamically import ApexCharts with SSR disabled
 const ApexCharts = dynamic(() => import("apexcharts"), { ssr: false });
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_URL,
+});
 
 function Dashboard() {
   const { user } = useAuth();
@@ -213,21 +216,21 @@ function Dashboard() {
         }
 
         // Get interns data
-        const internsResponse = await axios.get('https://backend-internship-portal.vercel.app/api/interns', {
+        const internsResponse = await axiosInstance.get('/api/interns', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
         setInterns(internsResponse.data || []);
 
         // Get past interns
-        const pastInternsResponse = await axios.get('https://backend-internship-portal.vercel.app/api/interns', {
+        const pastInternsResponse = await axiosInstance.get('/api/interns', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
         setPastInterns(pastInternsResponse.data || []);
 
         // Get projects
-        const projectsResponse = await axios.get('https://backend-internship-portal.vercel.app/api/interns', {
+        const projectsResponse = await axiosInstance.get('/api/interns', {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -327,7 +330,7 @@ function Dashboard() {
         formData.append('resume', internFile);
       }
       // Add intern to database using the correct endpoint
-      await axios.post('http://localhost:5000/api/interns', formData, {
+      await axiosInstance.post('/api/interns', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -335,7 +338,7 @@ function Dashboard() {
       });
 
       // Refresh interns list
-      const response = await axios.get('http://localhost:5000/api/interns', {
+      const response = await axiosInstance.get('/api/interns', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -445,14 +448,14 @@ function Dashboard() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      await axios.post(
-        `http://localhost:5000/api/interns/${internId}/attendance`, 
+      await axiosInstance.post(
+        `/api/interns/${internId}/attendance`, 
         { status, date: new Date(), markedBy: user.name || 'Admin' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
       // Refresh interns data to show updated attendance
-      const internsResponse = await axios.get('http://localhost:5000/api/interns', {
+      const internsResponse = await axiosInstance.get('/api/interns', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -477,19 +480,19 @@ function Dashboard() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      await axios.delete(`http://localhost:5000/api/interns/${internId}`, {
+      await axiosInstance.delete(`/api/interns/${internId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       // Refresh data
-      const internsResponse = await axios.get('http://localhost:5000/api/interns', {
+      const internsResponse = await axiosInstance.get('/api/interns', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       setInterns(internsResponse.data || []);
       
       // Refresh past interns
-      const pastInternsResponse = await axios.get('http://localhost:5000/api/interns/past', {
+      const pastInternsResponse = await axiosInstance.get('/api/interns/past', {
         headers: { Authorization: `Bearer ${token}` }
       });
       

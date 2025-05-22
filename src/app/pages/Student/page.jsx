@@ -1,5 +1,4 @@
-'use client';
-
+"use client"
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
@@ -10,7 +9,9 @@ import {
   faUser, faTrash, faPencilAlt, faEye,
   faCheckCircle, faTimesCircle, faExclamationTriangle,
   faGraduationCap, faProjectDiagram, faClipboardList,
-  faSignOutAlt, faPlus, faAngleDown, faAngleUp
+  faSignOutAlt, faPlus, faAngleDown, faAngleUp,
+  faCalendarAlt, faTasks, faChartLine, faComments,
+  faFilter
 } from '@fortawesome/free-solid-svg-icons';
 
 function InternDashboard() {
@@ -18,288 +19,171 @@ function InternDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [progressUpdate, setProgressUpdate] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState('');
   const [apiHealth, setApiHealth] = useState('unknown');
+  const [activeTab, setActiveTab] = useState('projects');
+  const [attendanceFilter, setAttendanceFilter] = useState('all');
   const { user, logout } = useAuth();
   const router = useRouter();
+  const maxProgressLength = 500;
 
-  // Check API health
+  const axiosInstance = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_URL,
+  });
+
+  // Calculate unread feedback count
+  const unreadFeedbackCount = studentData?.projectFeedback?.filter(
+    feedback => !feedback.isRead
+  ).length || 0;
+
   useEffect(() => {
     const checkApiHealth = async () => {
       try {
-        await axios.get('https://backend-internship-portal.vercel.app/health');
+        await axiosInstance.get('/health');
         setApiHealth('online');
       } catch (err) {
-        console.error('API health check failed:', err);
         setApiHealth('offline');
       }
     };
-
     checkApiHealth();
   }, []);
 
-  // Fetch only current logged-in student data
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
         setLoading(true);
         setError(null);
-
         if (!user || !user.id) {
-          console.log('No user ID available yet, waiting...');
-          return; // Don't try to fetch data without user ID
+          return;
         }
-
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('No auth token found');
-          return; // Don't try to fetch without a token
+          setError('Authentication required. Please log in.');
+          return;
         }
-
         const headers = { Authorization: `Bearer ${token}` };
-        console.log('Fetching student data for ID:', user.id);
-
-        const response = await axios.get(`https://backend-internship-portal.vercel.app/api/student/profile/${user.id}`, { headers });
-        setStudentData(response.data);
-        console.log('Student data retrieved successfully');
-      } catch (err) {
-        console.error('Error fetching student data:', err);
-
-        if (err.response) {
-          // Check if the error is due to invalid token/auth
-          if (err.response.status === 401 || err.response.status === 403) {
-            console.error('Authentication error, redirecting to login');
-            // Don't redirect here, let ProtectedRoute handle it
-          }
-
-          setError(`Server error: ${err.response.status} - ${err.response.data?.error || 'Unknown error'}`);
-        } else if (err.request) {
-          setError('No response from server. Please check if the backend is running.');
-        } else {
-          setError(`Error: ${err.message}`);
+        const response = await axiosInstance.get(`/api/student/profile/${user.id}`, { headers });
+        const studentData = response.data;
+        setStudentData(studentData);
+        if (studentData.assignedProjects?.length > 0) {
+          setSelectedProjectId(studentData.assignedProjects[0]._id);
         }
+      } catch (err) {
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          router.push('/login');
+        }
+        setError(err.response?.data?.error || 'Error fetching data');
       } finally {
         setLoading(false);
       }
-
-      console.log('Student data:', studentData);
     };
-
     fetchStudentData();
-  }, [user]);
-
-  const fetchStudentData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      if (!user || !user.id) {
-        console.log('No user ID available yet, waiting...');
-        return;
-      }
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No auth token found');
-        return;
-      }
-
-      const headers = { Authorization: `Bearer ${token}` };
-      console.log('Fetching student data for ID:', user.id);
-
-      // Get student profile
-      const profileResponse = await axios.get(
-        `https://backend-internship-portal.vercel.app/api/student/profile/${user.id}`,
-        { headers }
-      );
-
-      const studentData = profileResponse.data;
-
-      // If there are assigned projects, fetch full project details for each
-      if (studentData.assignedProjects && studentData.assignedProjects.length > 0) {
-        const projectPromises = studentData.assignedProjects.map(async (projectRef) => {
-          // If it's just an ID string, fetch the full project
-          const projectId = typeof projectRef === 'string' ? projectRef : projectRef._id;
-
-          try {
-            const projectResponse = await axios.get(
-              `https://backend-internship-portal.vercel.app/api/student/projects/${projectId}`,
-              { headers }
-            );
-            return projectResponse.data;
-          } catch (error) {
-            console.error(`Error fetching project ${projectId}:`, error);
-            // Return the original reference if fetch fails
-            return projectRef;
-          }
-        });
-
-        // Replace assignedProjects with full project details
-        const projectDetails = await Promise.all(projectPromises);
-        studentData.assignedProjects = projectDetails;
-      }
-
-      setStudentData(studentData);
-      console.log('Student data retrieved successfully');
-    } catch (err) {
-      console.error('Error fetching student data:', err);
-
-      if (err.response) {
-        setError(`Server error: ${err.response.status} - ${err.response.data?.error || 'Unknown error'}`);
-      } else if (err.request) {
-        setError('No response from server. Please check if the backend is running.');
-      } else {
-        setError(`Error: ${err.message}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, router]);
 
   const markFeedbackAsRead = async (projectId, feedbackId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
-        `https://backend-internship-portal.vercel.app/api/student/feedback/${feedbackId}/mark-read`,
+      await axiosInstance.post(
+        `/api/student/feedback/${feedbackId}/mark-read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Update local state
-      setStudentData(prevData => {
-        const updatedData = { ...prevData };
-
-        if (updatedData.projectFeedback) {
-          const feedbackIndex = updatedData.projectFeedback.findIndex(
-            f => f._id === feedbackId
-          );
-
-          if (feedbackIndex !== -1) {
-            updatedData.projectFeedback[feedbackIndex].isRead = true;
-          }
-        }
-
-        return updatedData;
-      });
+      setStudentData(prevData => ({
+        ...prevData,
+        projectFeedback: prevData.projectFeedback.map(f =>
+          f._id === feedbackId ? { ...f, isRead: true } : f
+        )
+      }));
     } catch (error) {
-      console.error('Error marking feedback as read:', error);
+      setError('Error marking feedback as read');
     }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-  };
-
-  const calculateProgress = (student) => {
-    // Calculate progress based on completed tasks or progress updates
-    if (!student || !student.assignedProjects || student.assignedProjects.length === 0) {
-      return 0;
-    }
-
-    // If there are progress updates, use those to calculate progress
-    if (student.progressUpdates && student.progressUpdates.length > 0) {
-      return Math.min(Math.round((student.progressUpdates.length / 10) * 100), 100);
-    }
-
-    // Otherwise check project status
-    const completedProjects = student.assignedProjects.filter(
-      project => project.status === 'Completed'
-    ).length;
-
-    const inProgressProjects = student.assignedProjects.filter(
-      project => project.status === 'In Progress'
-    ).length;
-
-    if (student.assignedProjects.length === 0) return 0;
-
-    return Math.round(
-      ((completedProjects + (inProgressProjects * 0.5)) / student.assignedProjects.length) * 100
-    );
   };
 
   const submitProgressUpdate = async (e) => {
     e.preventDefault();
-
-    if (!studentData || !progressUpdate.trim()) {
+    if (!studentData || !progressUpdate.trim() || !selectedProjectId) {
+      setError('Please select a project and enter a progress update.');
       return;
     }
-
+    if (progressUpdate.length > maxProgressLength) {
+      setError(`Progress update must be ${maxProgressLength} characters or less.`);
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        alert('You must be logged in to submit a progress update');
-        return;
-      }
-
-      // Need to select the first project ID from assigned projects
-      if (!studentData.assignedProjects || studentData.assignedProjects.length === 0) {
-        alert('You need to have an assigned project to submit progress');
-        return;
-      }
-
-      // Get the first project ID to use for progress update
-      const projectId = studentData.assignedProjects[0]._id;
-
       setLoading(true);
-
-      await axios.post(
-        `https://backend-internship-portal.vercel.app/api/student/progress/${projectId}`,
+      await axiosInstance.post(
+        `/api/student/progress/${selectedProjectId}`,
         { content: progressUpdate },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Refresh data after posting update
-      const response = await axios.get(`https://backend-internship-portal.vercel.app/api/student/profile/${user.id}`, {
+      const response = await axiosInstance.get(`/api/student/profile/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       setStudentData(response.data);
-
       setProgressUpdate('');
-      alert('Progress update submitted successfully');
+      setSelectedProjectId(response.data.assignedProjects?.length > 0 ? response.data.assignedProjects[0]._id : '');
+      setError(null);
     } catch (err) {
-      console.error('Error submitting progress update:', err);
-      if (err.response) {
-        alert(`Failed to submit progress: ${err.response.data?.error || 'Server error'}`);
-      } else {
-        alert('Failed to submit progress update. Please try again.');
-      }
+      setError(err.response?.data?.error || 'Failed to submit progress update.');
     } finally {
       setLoading(false);
     }
   };
 
+  const getProjectProgress = (project) => {
+    if (!project.tasks || project.tasks.length === 0) return 0;
+    const completedTasks = project.tasks.filter(task => task.completed).length;
+    return Math.round((completedTasks / project.tasks.length) * 100);
+  };
+
+  const filteredAttendance = studentData?.attendance?.filter(record => {
+    if (attendanceFilter === 'all') return true;
+    return record.status === attendanceFilter;
+  }) || [];
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 max-w-lg">
-          <h3 className="font-bold mb-2">Error</h3>
-          <p>{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
+          <div className="text-red-500 mb-4">
+            <FontAwesomeIcon icon={faExclamationTriangle} size="2x" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Error Loading Dashboard</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
           <div className="mt-4">
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-200"
             >
               Try Again
             </button>
           </div>
-          <div className="mt-4 p-3 bg-gray-100 rounded text-gray-700 text-sm">
-            <h4 className="font-medium">Debug Information:</h4>
-            <p className="mt-1">API Status: {apiHealth}</p>
-            
+          <div className="mt-4 p-3 bg-gray-50 rounded text-gray-600 text-sm">
+            <h4 className="font-medium mb-1">Debug Information:</h4>
+            <p>API Status: <span className={apiHealth === 'online' ? 'text-green-500' : 'text-red-500'}>{apiHealth}</span></p>
             <p>User Role: {user ? user.role || 'Not specified' : 'Not logged in'}</p>
           </div>
         </div>
@@ -308,71 +192,104 @@ function InternDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-4 relative">
-
-      <header className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">NCAI Internship Portal</h1>
-        <p className="text-gray-600">Student Dashboard</p>
-
-        <div className="flex mt-[-39.5] justify-end">
-          <button
-            onClick={logout}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center"
-          >
-            <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-            Logout
-          </button>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+              <FontAwesomeIcon icon={faGraduationCap} className="mr-2 text-blue-500" />
+              NCAI Internship Portal
+            </h1>
+            <p className="text-gray-600 text-sm">Student Dashboard</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <p className="font-medium text-gray-800">{studentData?.name || 'Student'}</p>
+              <p className="text-xs text-gray-500">{studentData?.email || ''}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center transition duration-200"
+            >
+              <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="bg-white shadow-md rounded-lg p-6">
-        {studentData ? (
-          <div>
-            <div className="border-b pb-4 mb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">{studentData.name}</h2>
-                  <p className="text-gray-600">{studentData.email}</p>
-                </div>
-                <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1">
-                  {studentData.role || 'Student'}
-                </span>
-              </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-md text-white p-6 mb-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Welcome back, {studentData?.name?.split(' ')[0] || 'Student'}!</h2>
+              <p className="opacity-90">
+                {studentData?.assignedProjects?.length > 0
+                  ? `You have ${studentData.assignedProjects.length} active project(s)`
+                  : 'You currently have no assigned projects'}
+              </p>
+              <p className="text-sm mt-1">
+                Attendance Status: {studentData?.attendance?.length > 0
+                  ? `${studentData.attendance[studentData.attendance.length - 1].status} on ${formatDate(studentData.attendance[studentData.attendance.length - 1].date)}`
+                  : 'No attendance recorded yet'}
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Username</h3>
-                <p>{studentData.username}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Last Active</h3>
-                <p>{formatDate(studentData.lastActive)}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Progress</h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2 flex-grow">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full"
-                      style={{ width: `${calculateProgress(studentData)}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm">{calculateProgress(studentData)}%</span>
-                </div>
-              </div>
-              
+            <div className="bg-white bg-opacity-20 p-3 rounded-full">
+              <FontAwesomeIcon icon={faUser} size="lg" />
             </div>
+          </div>
+        </div>
 
-            {/* Assigned Projects */}
-            <div className="mb-6">
-              <h3 className="text-md font-medium mb-2">Assigned Tasks</h3>
-              {studentData.assignedProjects && studentData.assignedProjects.length > 0 ? (
-                <div className="space-y-3">
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => setActiveTab('projects')}
+            className={`px-4 py-2 font-medium text-sm flex items-center ${activeTab === 'projects' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <FontAwesomeIcon icon={faTasks} className="mr-2" />
+            My Projects
+          </button>
+          <button
+            onClick={() => setActiveTab('progress')}
+            className={`px-4 py-2 font-medium text-sm flex items-center ${activeTab === 'progress' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <FontAwesomeIcon icon={faChartLine} className="mr-2" />
+            Progress Updates
+          </button>
+          <button
+            onClick={() => setActiveTab('feedback')}
+            className={`px-4 py-2 font-medium text-sm flex items-center ${activeTab === 'feedback' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <FontAwesomeIcon icon={faComments} className="mr-2" />
+            Feedback
+            {unreadFeedbackCount > 0 && (
+              <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">{unreadFeedbackCount}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('attendance')}
+            className={`px-4 py-2 font-medium text-sm flex items-center ${activeTab === 'attendance' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+            Attendance
+          </button>
+        </div>
+
+        {activeTab === 'projects' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <FontAwesomeIcon icon={faProjectDiagram} className="mr-2 text-blue-500" />
+                Assigned Projects
+              </h3>
+              {studentData?.assignedProjects?.length > 0 ? (
+                <div className="space-y-4">
                   {studentData.assignedProjects.map((project) => (
-                    <div key={project._id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium">{project.title}</h4>
+                    <div key={project._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{project.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+                        </div>
                         <span className={`text-xs px-2 py-1 rounded-full ${project.status === 'Completed' ? 'bg-green-100 text-green-800' :
                           project.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
                             'bg-yellow-100 text-yellow-800'
@@ -380,83 +297,107 @@ function InternDashboard() {
                           {project.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{project.description}</p>
-                      <div className="mt-2 text-xs text-gray-500">
-                        Start date: {formatDate(project.startDate)}
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
+                          <span>Start Date: {formatDate(project.startDate)}</span>
+                          {project.endDate && (
+                            <span className="ml-3">
+                              <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
+                              End Date: {formatDate(project.endDate)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2">
+                          <div className="text-sm text-gray-700">Progress: {getProjectProgress(project)}%</div>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div
+                              className="bg-blue-600 h-2.5 rounded-full"
+                              style={{ width: `${getProjectProgress(project)}%` }}
+                            ></div>
+                          </div>
+                        </div>
                       </div>
-
-                      {/* Project tasks if available */}
                       {project.tasks && project.tasks.length > 0 && (
-                        <div className="mt-3">
-                          <h5 className="text-xs font-medium text-gray-600 mb-1">Tasks</h5>
-                          <ul className="list-disc list-inside text-sm">
+                        <div className="mt-4">
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Tasks</h5>
+                          <ul className="space-y-2">
                             {project.tasks.map((task, index) => (
-                              <li key={index}>{task.title || task}</li>
+                              <li key={index} className="flex items-start">
+                                <span className={`inline-block w-4 h-4 rounded-full mt-1 mr-2 flex-shrink-0 ${task.completed ? 'bg-green-100 border border-green-300' : 'bg-gray-100 border border-gray-300'}`}>
+                                  {task.completed && (
+                                    <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 w-3 h-3 relative -left-[1px] -top-[1px]" />
+                                  )}
+                                </span>
+                                <span className={`text-sm ${task.completed ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
+                                  {task.title || task}
+                                </span>
+                              </li>
                             ))}
                           </ul>
-                        </div>
-                      )}
-
-                      {/* Display project feedback if available */}
-                      {project.feedback && project.feedback.length > 0 && (
-                        <div className="mt-3 border-t border-gray-200 pt-3">
-                          <h5 className="text-xs font-medium text-blue-600 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                            </svg>
-                            Feedback from Admin
-                          </h5>
-                          <div className="space-y-2 mt-2 h-[353] overflow-y-scroll">
-                            {project.feedback.map((feedback, idx) => (
-                              <div key={idx} className="bg-blue-50 p-3 rounded text-sm">              
-                                <p className="text-gray-700">{feedback.comment || feedback.content}</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {formatDate(feedback.date)}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No projects assigned</p>
+                <div className="text-center py-8">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faProjectDiagram} className="text-gray-400 text-xl" />
+                  </div>
+                  <h4 className="text-gray-700 font-medium">No projects assigned</h4>
+                  <p className="text-gray-500 mt-1">Your supervisor will assign projects to you soon</p>
+                </div>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Progress Updates */}
-            <div className="mb-6">
-              <h3 className="text-md font-medium mb-2">Progress Updates</h3>
-              {studentData.progressUpdates && studentData.progressUpdates.length > 0 ? (
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+        {activeTab === 'progress' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                  <FontAwesomeIcon icon={faChartLine} className="mr-2 text-blue-500" />
+                  Progress Updates
+                </h3>
+                {studentData?.assignedProjects?.length > 0 && (
+                  <button
+                    onClick={() => document.getElementById('progress-form').scrollIntoView({ behavior: 'smooth' })}
+                    className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center"
+                  >
+                    <FontAwesomeIcon icon={faPlus} className="mr-1" />
+                    New Update
+                  </button>
+                )}
+              </div>
+              {studentData?.progressUpdates?.length > 0 ? (
+                <div className="space-y-4">
                   {studentData.progressUpdates.map((update, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-medium text-gray-600">
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition duration-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-gray-700">
                           {formatDate(update.date || update.timestamp)}
                         </span>
                         {update.hasAdminFeedback && (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center">
+                            <FontAwesomeIcon icon={faComments} className="mr-1" />
                             Feedback Received
                           </span>
                         )}
                       </div>
-                      <p className="text-sm">{update.content || update.text}</p>
-
-                      {/* Display admin feedback if available */}
+                      <p className="text-gray-700">{update.content || update.text}</p>
                       {update.feedback && (
-                        <div className="mt-2 border-t border-gray-200 pt-2">
-                          <div className="flex items-center mb-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                            </svg>
-                            <span className="text-xs font-medium text-blue-600">Admin Feedback:</span>
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <div className="flex items-center text-blue-500 mb-1">
+                            <FontAwesomeIcon icon={faComments} className="mr-2" />
+                            <span className="text-sm font-medium">Supervisor Feedback</span>
                           </div>
-                          <p className="text-sm text-gray-700 bg-blue-50 p-2 rounded">{update.feedback}</p>
+                          <div className="bg-blue-50 p-3 rounded text-sm text-gray-700">
+                            {update.feedback}
+                          </div>
                           {update.feedbackDate && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-500 mt-1 text-right">
                               Provided on {formatDate(update.feedbackDate)}
                             </p>
                           )}
@@ -466,59 +407,197 @@ function InternDashboard() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No progress updates available</p>
+                <div className="text-center py-8">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faClipboardList} className="text-gray-400 text-xl" />
+                  </div>
+                  <h4 className="text-gray-700 font-medium">No progress updates yet</h4>
+                  <p className="text-gray-500 mt-1">Submit your first progress update below</p>
+                </div>
               )}
-
-              {/* Progress Update Form */}
-              {studentData.assignedProjects?.length > 0 && (
-                <form onSubmit={submitProgressUpdate} className="mt-4 border-t pt-4">
-                  <textarea
-                    value={progressUpdate}
-                    onChange={(e) => setProgressUpdate(e.target.value)}
-                    placeholder="What did you work on today?"
-                    className="w-full p-2 border rounded-lg resize-none h-24"
-                    required
-                  ></textarea>
-                  <button
-                    type="submit"
-                    className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                    disabled={loading}
-                  >
-                    {loading ? 'Submitting...' : 'Submit Progress'}
-                  </button>
+              {studentData?.assignedProjects?.length > 0 && (
+                <form
+                  id="progress-form"
+                  onSubmit={submitProgressUpdate}
+                  className="mt-8 border-t pt-6"
+                >
+                  <h4 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                    <FontAwesomeIcon icon={faPencilAlt} className="mr-2 text-blue-500" />
+                    Submit New Progress Update
+                  </h4>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-medium mb-2">
+                      Select Project
+                    </label>
+                    <select
+                      value={selectedProjectId}
+                      onChange={(e) => setSelectedProjectId(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select a project</option>
+                      {studentData.assignedProjects.map(project => (
+                        <option key={project._id} value={project._id}>
+                          {project.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <textarea
+                      value={progressUpdate}
+                      onChange={(e) => setProgressUpdate(e.target.value)}
+                      placeholder="What did you accomplish today? What challenges did you face? What are your next steps?"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none h-32"
+                      required
+                    ></textarea>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {progressUpdate.length}/{maxProgressLength} characters
+                    </p>
+                    {error && (
+                      <div className="text-red-500 text-sm mt-2">{error}</div>
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition duration-200"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                          Submit Update
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </form>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Attendance Records */}
-            {studentData.attendance && studentData.attendance.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-md font-medium mb-2">Attendance Records</h3>
+        {activeTab === 'feedback' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <FontAwesomeIcon icon={faComments} className="mr-2 text-blue-500" />
+                Feedback from Supervisors
+              </h3>
+              {studentData?.projectFeedback?.length > 0 ||
+              (studentData?.assignedProjects?.some(p => p.feedback?.length > 0)) ? (
+                <div className="space-y-4">
+                  {studentData?.assignedProjects?.map(project => (
+                    project.feedback?.length > 0 && (
+                      <div key={project._id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center mb-3">
+                          <h4 className="font-medium text-gray-900">{project.title}</h4>
+                          <span className="ml-auto text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            Project Feedback
+                          </span>
+                        </div>
+                        <div className="space-y-3">
+                          {project.feedback.map((feedback, idx) => (
+                            <div key={idx} className="bg-blue-50 p-3 rounded text-sm">
+                              <p className="text-gray-700">{feedback.comment || feedback.content}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatDate(feedback.date)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  ))}
+                  {studentData?.projectFeedback?.map((feedback, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition duration-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          {feedback.projectId ?
+                            `Feedback on ${studentData.assignedProjects?.find(p => p._id === feedback.projectId)?.title || 'Project'}` :
+                            'General Feedback'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatDate(feedback.date)}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{feedback.content}</p>
+                      {!feedback.isRead && (
+                        <div className="mt-2 flex justify-end">
+                          <button
+                            onClick={() => markFeedbackAsRead(feedback.projectId, feedback._id)}
+                            className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                          >
+                            Mark as Read
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faComments} className="text-gray-400 text-xl" />
+                  </div>
+                  <h4 className="text-gray-700 font-medium">No feedback yet</h4>
+                  <p className="text-gray-500 mt-1">Your supervisors will provide feedback on your work</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'attendance' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-blue-500" />
+                  Attendance Records
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm text-gray-700">Filter:</label>
+                  <select
+                    value={attendanceFilter}
+                    onChange={(e) => setAttendanceFilter(e.target.value)}
+                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="all">All</option>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                  </select>
+                </div>
+              </div>
+              {filteredAttendance.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Time In
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Notes
-                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {studentData.attendance.slice().reverse().map((record, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-2 text-sm text-gray-900">
+                      {filteredAttendance.slice().reverse().map((record, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {formatDate(record.date)}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <span
                               className={`px-2 py-1 text-xs rounded-full ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
                                 record.status === 'Absent' ? 'bg-red-100 text-red-800' :
@@ -529,30 +608,33 @@ function InternDashboard() {
                               {record.status}
                             </span>
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {record.timeIn || record.time || 'N/A'}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {record.timeIn || 'N/A'}
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {record.notes || 'N/A'}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {record.timeOut || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {record.notes || 'None'}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              </div>
-            )}
-
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-64">
-            <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <p className="mt-4 text-gray-500">No student data available</p>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400 text-xl" />
+                  </div>
+                  <h4 className="text-gray-700 font-medium">No attendance records yet</h4>
+                  <p className="text-gray-500 mt-1">Your attendance will be recorded once your internship begins</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

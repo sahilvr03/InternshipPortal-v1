@@ -19,6 +19,9 @@ export default function ProgressUpdates() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_URL,
+});
 
   // Fetch previous progress updates
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function ProgressUpdates() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get('https://backend-internship-portal.vercel.app/api/progress-updates', {
+        const response = await axiosInstance.get('/api/progress-updates', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setPreviousUpdates(response.data);
@@ -56,8 +59,8 @@ export default function ProgressUpdates() {
       setSuccess(false);
       
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        'https://backend-internship-portal.vercel.app/api/progress-updates',
+      const response = await axiosInstance.post(
+        '/api/progress-updates',
         { content: progressUpdate },
         { headers: { Authorization: `Bearer ${token}` } }
       );

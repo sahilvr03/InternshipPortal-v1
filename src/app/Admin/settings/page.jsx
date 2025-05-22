@@ -11,6 +11,9 @@ import {
   faCog, faUser, faKey, faEnvelope, faSave, 
   faExclamationTriangle, faCheckCircle, faBell, faLock
 } from '@fortawesome/free-solid-svg-icons';
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_URL,
+});
 
 function SettingsPage() {
   const { user, logout } = useAuth();
@@ -70,8 +73,8 @@ function SettingsPage() {
       }
       
       // Make API call to update account info
-      await axios.put(
-        'http://localhost:5000/api/admin/profile', 
+      await axiosInstance.put(
+        '/api/admin/profile', 
         accountSettings,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -107,8 +110,8 @@ function SettingsPage() {
       }
       
       // Make API call to change password
-      await axios.put(
-        'http://localhost:5000/api/admin/password', 
+      await axiosInstance.put(
+        '/api/admin/password', 
         {
           currentPassword: passwordSettings.currentPassword,
           newPassword: passwordSettings.newPassword
