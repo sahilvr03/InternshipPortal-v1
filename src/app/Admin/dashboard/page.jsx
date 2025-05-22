@@ -561,7 +561,7 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-100 flex font-sans">
       <Sidebar />
       <div className="flex-1">
-        <Navbar />
+        
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -652,8 +652,6 @@ function Dashboard() {
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -674,7 +672,7 @@ function Dashboard() {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.email}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              {/* <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                                   <div
                                     className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
@@ -682,10 +680,10 @@ function Dashboard() {
                                   ></div>
                                 </div>
                                 <span className="text-xs text-gray-500">{calculateProgress(intern)}%</span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              </td> */}
+                              {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {formatDate(intern.lastActive)}
-                              </td>
+                              </td> */}
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex space-x-2">
                                   <button
