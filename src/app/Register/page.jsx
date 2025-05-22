@@ -477,18 +477,30 @@ export default function InternshipPortal() {
                   />
                   {errors.lastName && <span className="text-red-400 text-sm">{errors.lastName}</span>}
                 </div>
-                <div>
-                  <input
-                    type="date"
-                    name="dob"
-                    placeholder="Date of Birth *"
-                    className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
-                    onChange={handleChange}
-                    value={formData.dob}
-                    max={new Date().toISOString().split('T')[0]}
-                  />
-                  {errors.dob && <span className="text-red-400 text-sm">{errors.dob}</span>}
-                </div>
+               <div className="w-full relative">
+  <input
+    type="date"
+    id="dob"
+    name="dob"
+    className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 placeholder-transparent focus:ring-2 focus:ring-blue-500"
+    onChange={handleChange}
+    value={formData.dob}
+    max={new Date().toISOString().split('T')[0]}
+  />
+  <label
+    htmlFor="dob"
+    className={`absolute top-3 left-68 text-gray-400 transition-all pointer-events-none ${
+      formData.dob ? "text-sm top-1 text-gray-300" : "text-base"
+    }`}
+  >
+    Date of Birth *
+  </label>
+  {errors.dob && (
+    <span className="text-red-400 text-sm">{errors.dob}</span>
+  )}
+</div>
+
+
                 <div>
                   <input
                     name="phone"
