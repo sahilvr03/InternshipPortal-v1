@@ -14,7 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 // Base URL from environment variable
-const BASE_URL = process.env.NEXT_PUBLIC_URL || 'http://localhost:5000'; // Fallback URL if env variable is unset
+const BASE_URL = process.env.NEXT_PUBLIC_URL || 'http://localhost:8000'; // Fallback URL if env variable is unset
 
 function StudentManagement() {
   const { user, logout } = useAuth();
