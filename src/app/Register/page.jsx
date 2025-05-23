@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
@@ -97,13 +96,43 @@ export default function InternshipPortal() {
     name: "",
     username: "",
     password: "",
-    weeks: 4 // Default to 4 weeks
+    weeks: 8 // Default to 8 weeks
   });
 
-  const universities = ["Karachi University", "IBA Karachi", "NED University", "FAST Karachi", "SZABIST Karachi", "LUMS", "UET Lahore", "GIKI", "NUST", "COMSATS Islamabad", "UET Peshawar", "UET Taxila", "UET Faisalabad", "UET Gujranwala"];
-  const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development", "Data Science"];
-  const departments = ["Computer Science", "Software Engineering", "Information Technology", "Data Engineering"];
-  const weeksOptions = [4, 5, 6, 7, 8, 9, 10, 11, 12]; // Internship duration options
+  const universities = [
+    
+    "NED University",
+    
+    "Others"
+  ];
+
+  const universityDepartments = {
+    
+    "NED University": [
+          
+      "Mechanical Engineering",
+      "Textile Engineering",
+      "Industrial & Manufacturing Engineering",
+      "Automotive & Marine Engineering",
+      "Electrical Engineering",
+      "Computer & Information Systems Engineering",
+      "Electronic Engineering",
+      "Biomedical Engineering",
+      "Software Engineering",
+      "Computer Science & Information Technology",
+      "Economics & Management Sciences",
+      "Chemical Engineering",
+      "Materials Engineering",
+      "Metallurgical Engineering",
+      "Environmental Engineering",
+      "Architecture & Planning",
+      "Economics & Finance",
+    ],
+    "Others": ["Computer Science", "Software Engineering", "Information Technology", "Data Engineering",, "Ai Engineering"]
+  };
+
+  const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development", "Data Science", "IoT", "3D Printing"];
+  const weeksOptions = [8, 9, 10, 11, 12]; // Minimum 8 weeks
 
   // Validate Pakistani phone number (03XXXXXXXXX)
   const validatePakistaniNumber = (number) => {
@@ -145,7 +174,8 @@ export default function InternshipPortal() {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        [name]: value,
+        ...(name === 'university' ? { department: '' } : {}) // Reset department when university changes
       }));
 
       if (name === 'firstName' || name === 'lastName') {
@@ -418,7 +448,7 @@ export default function InternshipPortal() {
         name: "",
         username: "",
         password: "",
-        weeks: 4
+        weeks: 8
       });
 
       setPreviewImage("");
@@ -477,30 +507,28 @@ export default function InternshipPortal() {
                   />
                   {errors.lastName && <span className="text-red-400 text-sm">{errors.lastName}</span>}
                 </div>
-               <div className="w-full relative">
-  <input
-    type="date"
-    id="dob"
-    name="dob"
-    className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 placeholder-transparent focus:ring-2 focus:ring-blue-500"
-    onChange={handleChange}
-    value={formData.dob}
-    max={new Date().toISOString().split('T')[0]}
-  />
-  <label
-    htmlFor="dob"
-    className={`absolute top-3 left-68 text-gray-400 transition-all pointer-events-none ${
-      formData.dob ? "text-sm top-1 text-gray-300" : "text-base"
-    }`}
-  >
-    Date of Birth *
-  </label>
-  {errors.dob && (
-    <span className="text-red-400 text-sm">{errors.dob}</span>
-  )}
-</div>
-
-
+                <div className="w-full relative">
+                  <input
+                    type="date"
+                    id="dob"
+                    name="dob"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 placeholder-transparent focus:ring-2 focus:ring-blue-500"
+                    onChange={handleChange}
+                    value={formData.dob}
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                  <label
+                    htmlFor="dob"
+                    className={`absolute top-3 left-69 text-gray-400 transition-all pointer-events-none ${
+                      formData.dob ? "text-sm top-1 text-gray-300" : "text-base"
+                    }`}
+                  >
+                    Date of Birth *
+                  </label>
+                  {errors.dob && (
+                    <span className="text-red-400 text-sm">{errors.dob}</span>
+                  )}
+                </div>
                 <div>
                   <input
                     name="phone"
@@ -573,9 +601,10 @@ export default function InternshipPortal() {
                     className="w-full p-3 bg-gray-700 rounded-lg"
                     onChange={handleChange}
                     value={formData.department}
+                    disabled={!formData.university}
                   >
                     <option value="">Select Your Department</option>
-                    {departments.map(dept => (
+                    {formData.university && universityDepartments[formData.university]?.map(dept => (
                       <option key={dept} value={dept}>{dept}</option>
                     ))}
                   </select>
@@ -599,7 +628,7 @@ export default function InternshipPortal() {
 
             {step === 3 && (
               <div className="space-y-4">
-                <div {...getRootProps()} className="border-2 border-dashed border-gray-600 p-8 text-center rounded-lg cursor-pointer hover:border-blue-500 transition">
+                {/* <div {...getRootProps()} className="border-2 border-dashed border-gray-600 p-8 text-center rounded-lg cursor-pointer hover:border-blue-500 transition">
                   <input {...getInputProps()} />
                   <p className="text-gray-300">Drag & drop profile picture (max 2MB) and resume (max 5MB) here, or click to select</p>
                   <p className="text-xs text-gray-400 mt-2">Accepted: JPG, PNG, PDF</p>
@@ -611,7 +640,7 @@ export default function InternshipPortal() {
                   {formData.resume && (
                     <p className="mt-2 text-green-400">Resume uploaded: {formData.resume.name}</p>
                   )}
-                </div>
+                </div> */}
 
                 {resumeText && (
                   <div className="bg-gray-700 p-4 rounded-lg max-h-40 overflow-y-auto">
