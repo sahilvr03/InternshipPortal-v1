@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
@@ -11,8 +11,9 @@ import {
   faGraduationCap, faProjectDiagram, faClipboardList,
   faSignOutAlt, faPlus, faAngleDown, faAngleUp,
   faCalendarAlt, faTasks, faChartLine, faComments,
-  faFilter
+  faFilter, faQrcode
 } from '@fortawesome/free-solid-svg-icons';
+import { BrowserQRCodeReader } from '@zxing/library';
 
 function InternDashboard() {
   const [studentData, setStudentData] = useState(null);
@@ -23,15 +24,18 @@ function InternDashboard() {
   const [apiHealth, setApiHealth] = useState('unknown');
   const [activeTab, setActiveTab] = useState('projects');
   const [attendanceFilter, setAttendanceFilter] = useState('all');
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannerError, setScannerError] = useState(null);
   const { user, logout } = useAuth();
   const router = useRouter();
+  const videoRef = useRef(null);
+  const codeReader = useRef(null);
   const maxProgressLength = 500;
 
   const axiosInstance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_URL,
   });
 
-  // Calculate unread feedback count
   const unreadFeedbackCount = studentData?.projectFeedback?.filter(
     feedback => !feedback.isRead
   ).length || 0;
@@ -80,6 +84,34 @@ function InternDashboard() {
     fetchStudentData();
   }, [user, router]);
 
+  useEffect(() => {
+    if (showScanner) {
+      codeReader.current = new BrowserQRCodeReader();
+      codeReader.current
+        .decodeFromVideoDevice(null, videoRef.current, (result, err) => {
+          if (result) {
+            handleScan(result.getText());
+            codeReader.current.reset();
+            setShowScanner(false);
+          }
+          if (err && err.name !== 'NotFoundException') {
+            setScannerError('Error scanning QR code. Please try again.');
+          }
+        })
+        .catch(err => {
+          setScannerError('Error accessing camera. Please ensure camera permissions are granted.');
+        });
+    } else if (codeReader.current) {
+      codeReader.current.reset();
+    }
+
+    return () => {
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
+    };
+  }, [showScanner]);
+
   const markFeedbackAsRead = async (projectId, feedbackId) => {
     try {
       const token = localStorage.getItem('token');
@@ -96,6 +128,32 @@ function InternDashboard() {
       }));
     } catch (error) {
       setError('Error marking feedback as read');
+    }
+  };
+
+  const handleScan = async (data) => {
+    if (data) {
+      try {
+        setScannerError(null);
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const response = await axiosInstance.post(
+          `/api/admin/attendance/qr/${user.id}`,
+          { qrToken: data },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // Refresh student data to show updated attendance
+        const updatedResponse = await axiosInstance.get(`/api/student/profile/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setStudentData(updatedResponse.data);
+        setShowScanner(false);
+        alert(response.data.message);
+      } catch (err) {
+        setScannerError(err.response?.data?.error || 'Failed to mark attendance');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -578,6 +636,25 @@ function InternDashboard() {
                     <option value="Late">Late</option>
                   </select>
                 </div>
+              </div>
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowScanner(!showScanner)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition duration-200"
+                >
+                  <FontAwesomeIcon icon={faQrcode} className="mr-2" />
+                  {showScanner ? 'Hide QR Scanner' : 'Scan QR Code'}
+                </button>
+                {showScanner && (
+                  <div className="mt-4">
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <video ref={videoRef} style={{ width: '100%' }} />
+                      {scannerError && (
+                        <p className="text-red-500 text-sm mt-2">{scannerError}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               {filteredAttendance.length > 0 ? (
                 <div className="overflow-x-auto">
