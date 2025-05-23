@@ -111,30 +111,29 @@ export default function InternshipPortal() {
     "NED University": [
           
       "Mechanical Engineering",
-      "Textile Engineering",
-      "Industrial & Manufacturing Engineering",
+    
+    
       "Automotive & Marine Engineering",
       "Electrical Engineering",
       "Computer & Information Systems Engineering",
       "Electronic Engineering",
-      "Biomedical Engineering",
+     
       "Software Engineering",
       "Computer Science & Information Technology",
       "Economics & Management Sciences",
       "Chemical Engineering",
-      "Materials Engineering",
-      "Metallurgical Engineering",
+    
       "Environmental Engineering",
-      "Architecture & Planning",
+
       "Economics & Finance",
     ],
     "Others": ["Computer Science", "Software Engineering", "Information Technology", "Data Engineering",, "Ai Engineering"]
   };
 
-  const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development", "Data Science", "IoT", "3D Printing"];
+  const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development",  "Embadding System", "Robotics"];
   const weeksOptions = [8, 9, 10, 11, 12]; // Minimum 8 weeks
 
-  // Validate Pakistani phone number (03XXXXXXXXX)
+  // Validate Pakistani phone number (03XXXXXXXXX)otic
   const validatePakistaniNumber = (number) => {
     return /^03\d{9}$/.test(number);
   };
