@@ -15,7 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "NCAI-INTERN-PORTAL",
+  title: "Scl-Internship Portal",
+  keywords: [
+    "internship",
+    "portal",
+    "student management",
+    "projects",
+    "internships",
+    "education",
+  ],
   description: 'Manage internships, projects, and student progress',
 };
 
