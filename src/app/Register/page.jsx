@@ -507,27 +507,31 @@ export default function InternshipPortal() {
                   {errors.lastName && <span className="text-red-400 text-sm">{errors.lastName}</span>}
                 </div>
                 <div className="w-full relative">
-                  <input
-                    type="date"
-                    id="dob"
-                    name="dob"
-                    className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 placeholder-transparent focus:ring-2 focus:ring-blue-500"
-                    onChange={handleChange}
-                    value={formData.dob}
-                    max={new Date().toISOString().split('T')[0]}
-                  />
-                  <label
-                    htmlFor="dob"
-                    className={`absolute top-3 left-69 text-gray-400 transition-all pointer-events-none ${
-                      formData.dob ? "text-sm top-1 text-gray-300" : "text-base"
-                    }`}
-                  >
-                    Date of Birth *
-                  </label>
-                  {errors.dob && (
-                    <span className="text-red-400 text-sm">{errors.dob}</span>
-                  )}
-                </div>
+  <div className="relative">
+    <input
+      type="date"
+      id="dob"
+      name="dob"
+      className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 peer text-base sm:text-sm"
+      onChange={handleChange}
+      value={formData.dob}
+      max={new Date().toISOString().split('T')[0]}
+    />
+    <label
+      htmlFor="dob"
+      className={`
+        absolute left-50 transition-all duration-200 pointer-events-none text-gray-400
+        peer-focus:-top-2 peer-focus:text-xs peer-focus:text-gray-300 peer-focus:bg-gray-700 peer-focus:px-1
+        ${formData.dob ? '-top-2 text-xs text-gray-300 bg-gray-700 px-1' : 'top-3 text-base sm:text-sm'}
+      `}
+    >
+      Date of Birth *
+    </label>
+  </div>
+  {errors.dob && (
+    <span className="text-red-400 text-sm mt-1 block">{errors.dob}</span>
+  )}
+</div>
                 <div>
                   <input
                     name="phone"
