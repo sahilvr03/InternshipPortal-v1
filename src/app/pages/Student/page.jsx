@@ -54,7 +54,6 @@ function InternDashboard() {
     baseURL: process.env.NEXT_PUBLIC_URL || "http://192.168.8.113:8000",
   });
 
-  // Check if running in a secure context
   const isSecureContext =
     typeof window !== "undefined" &&
     (window.isSecureContext ||
@@ -64,13 +63,11 @@ function InternDashboard() {
       window.location.hostname === "192.168.8.113");
   const isFileProtocol = typeof window !== "undefined" && window.location.protocol === "file:";
 
-  // Initialize dark mode based on system preference
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     setIsDarkMode(prefersDark);
   }, []);
 
-  // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
@@ -89,7 +86,6 @@ function InternDashboard() {
   const unreadFeedbackCount =
     studentData?.projectFeedback?.filter((feedback) => !feedback.isRead).length || 0;
 
-  // Check API health
   useEffect(() => {
     const checkApiHealth = async () => {
       try {
@@ -102,7 +98,6 @@ function InternDashboard() {
     checkApiHealth();
   }, []);
 
-  // Fetch student data
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
@@ -136,12 +131,10 @@ function InternDashboard() {
     fetchStudentData();
   }, [user, router]);
 
-  // Check if camera API is available
   const isCameraApiAvailable = () => {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   };
 
-  // Handle camera permission request
   const requestCameraPermission = async () => {
     try {
       if (!isSecureContext) {
@@ -173,7 +166,6 @@ function InternDashboard() {
     }
   };
 
-  // Initialize and manage QR code scanner
   useEffect(() => {
     if (showScanner && cameraPermission === "granted") {
       if (!isCameraApiAvailable()) {
@@ -209,7 +201,6 @@ function InternDashboard() {
     };
   }, [showScanner, cameraPermission]);
 
-  // Toggle QR scanner
   const handleToggleScanner = async () => {
     if (!showScanner) {
       setScannerError(null);
@@ -238,7 +229,6 @@ function InternDashboard() {
     }
   };
 
-  // Handle QR code scan
   const handleScan = async (qrData) => {
     try {
       setScannerError(null);
@@ -279,7 +269,6 @@ function InternDashboard() {
     }
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -291,7 +280,6 @@ function InternDashboard() {
     });
   };
 
-  // Submit progress update
   const submitProgressUpdate = async (e) => {
     e.preventDefault();
     if (!studentData || !progressUpdate.trim() || !selectedProjectId) {
@@ -317,7 +305,7 @@ function InternDashboard() {
       setLoading(true);
       await axiosInstance.post(
         `/api/student/progress/${selectedProjectId}`,
-        { content: progressUpdate },
+        { content: update },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const response = await axiosInstance.get(`/api/student/profile/${user.id}`, {
@@ -344,26 +332,22 @@ function InternDashboard() {
     }
   };
 
-  // Calculate project progress
   const getProjectProgress = (project) => {
     if (!project.tasks || project.tasks.length === 0) return 0;
     const completedTasks = project.tasks.filter((task) => task.completed).length;
     return Math.round((completedTasks / project.tasks.length) * 100);
   };
 
-  // Filter attendance records
   const filteredAttendance =
     studentData?.attendance?.filter((record) => {
       if (attendanceFilter === "all") return true;
       return record.status === attendanceFilter;
     }) || [];
 
-  // Close popup
   const closePopup = () => {
     setShowPopup({ visible: false, message: "", isSuccess: true });
   };
 
-  // Mark feedback as read
   const markFeedbackAsRead = async (projectId, feedbackId) => {
     try {
       const token = localStorage.getItem("token");
@@ -381,32 +365,30 @@ function InternDashboard() {
     }
   };
 
-  // Loading state
   if (loading && !studentData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 transition-colors duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 sm:px-6 transition-colors duration-300">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 dark:border-indigo-400 mx-auto"></div>
-          <p className="mt-4 text-base text-gray-600 dark:text-gray-300 font-medium">Loading your dashboard...</p>
+          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-t-2 border-b-2 border-indigo-500 dark:border-indigo-400 mx-auto"></div>
+          <p className="mt-4 text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 transition-colors duration-300">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-md w-full transition-colors duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 sm:px-6 transition-colors duration-300">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-md w-full">
           <div className="text-red-500 dark:text-red-400 mb-4 flex justify-center">
             <FontAwesomeIcon icon={faExclamationTriangle} size="2x" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2 text-center">Error Loading Dashboard</h3>
-          <p className="text-base text-gray-600 dark:text-gray-300 mb-4 text-center">{error}</p>
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2 text-center">Error Loading Dashboard</h3>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 text-center">{error}</p>
           <div className="mt-4 flex justify-center">
             <button
               onClick={() => window.location.reload()}
-              className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-base"
+              className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-sm sm:text-base"
             >
               Try Again
             </button>
@@ -425,9 +407,8 @@ function InternDashboard() {
 
   return (
     <div className={`min-h-screen flex flex-col font-inter transition-colors duration-300 ${isDarkMode ? "dark bg-gray-900" : "bg-gray-100"}`}>
-      {/* Popup Modal */}
       {showPopup.visible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 sm:px-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-lg transition-transform transform duration-300 scale-100">
             <div className="flex items-center mb-4">
               <FontAwesomeIcon
@@ -435,15 +416,15 @@ function InternDashboard() {
                 className={showPopup.isSuccess ? "text-green-500 dark:text-green-400 mr-2" : "text-red-500 dark:text-red-400 mr-2"}
                 size="lg"
               />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
                 {showPopup.isSuccess ? "Success" : "Error"}
               </h3>
             </div>
-            <p className="text-base text-gray-700 dark:text-gray-300 mb-4">{showPopup.message}</p>
+            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-4">{showPopup.message}</p>
             <div className="flex justify-end">
               <button
                 onClick={closePopup}
-                className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-base"
+                className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-sm sm:text-base"
               >
                 Close
               </button>
@@ -452,31 +433,30 @@ function InternDashboard() {
         </div>
       )}
 
-      {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-              <FontAwesomeIcon icon={faGraduationCap} className="mr-2 text-indigo-500 dark:text-indigo-400 w-6 h-6" />
-              NCAI Internship Portal
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Student Dashboard</p>
+          <div className="flex items-center">
+            <FontAwesomeIcon icon={faGraduationCap} className="mr-2 text-indigo-500 dark:text-indigo-400 w-6 h-6" />
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">NCAI Internship Portal</h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Student Dashboard</p>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <div className="text-center sm:text-right">
-              <p className="font-medium text-gray-800 dark:text-gray-100 text-base">{studentData?.name || "Student"}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{studentData?.email || ""}</p>
+              <p className="font-medium text-gray-800 dark:text-gray-100 text-sm sm:text-base">{studentData?.name || "Student"}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{studentData?.email || ""}</p>
             </div>
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-200"
               aria-label="Toggle dark mode"
             >
-              <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} className="w-5 h-5" />
+              <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={logout}
-              className="bg-red-500 dark:bg-red-600 text-white px-6 py-2 mx-4 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 flex items-center transition duration-200 text-base"
+              className="bg-red-500 dark:bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-700 flex items-center transition duration-200 text-sm sm:text-base"
             >
               <FontAwesomeIcon icon={faSignOutAlt} className="mr-2 w-4 h-4" />
               Logout
@@ -485,75 +465,73 @@ function InternDashboard() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 rounded-2xl shadow-lg text-white p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">
-                Welcome back, {studentData?.name?.split(" ")[0] || "Student"}!
-              </h2>
-              <p className="text-sm opacity-90">
-                {studentData?.assignedProjects?.length > 0
-                  ? `You have ${studentData.assignedProjects.length} active project(s)`
-                  : "You currently have no assigned projects"}
-              </p>
-              <p className="text-sm mt-1">
-                Attendance Status:{" "}
-                {studentData?.attendance?.length > 0
-                  ? `${studentData.attendance[studentData.attendance.length - 1].status} on ${formatDate(
-                      studentData.attendance[studentData.attendance.length - 1].date
-                    )}`
-                  : "No attendance recorded yet"}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 bg-opacity-20 dark:bg-opacity-10 p-3 rounded-full self-center sm:self-start">
-              <FontAwesomeIcon icon={faUser} size="lg" />
-            </div>
-          </div>
-        </div>
+        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 dark:from-indigo-700 dark:via-purple-700 dark:to-indigo-800 rounded-2xl shadow-xl text-white p-6 sm:p-8 mb-8 transition-all duration-300">
+  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+    <div>
+      <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 tracking-tight">
+        Welcome back, {studentData?.name?.split(" ")[0] || "Student"}!
+      </h2>
+      <p className="text-sm sm:text-base text-white/90 mb-1">
+        {studentData?.assignedProjects?.length > 0
+          ? `You have ${studentData.assignedProjects.length} active project${studentData.assignedProjects.length > 1 ? "s" : ""}.`
+          : "You currently have no assigned projects."}
+      </p>
+      <p className="text-sm sm:text-base text-white/80">
+        <span className="font-medium">Attendance Status:</span>{" "}
+        {studentData?.attendance?.length > 0
+          ? `${studentData.attendance[studentData.attendance.length - 1].status} on ${formatDate(
+              studentData.attendance[studentData.attendance.length - 1].date
+            )}`
+          : "No attendance recorded yet."}
+      </p>
+    </div>
+    {/* <div className="flex-shrink-0 bg-white dark:bg-gray-900 bg-opacity-30 dark:bg-opacity-10 p-4 rounded-full shadow-md hover:scale-105 transition-transform">
+      <FontAwesomeIcon icon={faUser} size="2x" className="text-indigo-100" />
+    </div> */}
+  </div>
+</div>
 
-        {/* Tabs */}
+
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
-          {["projects", "progress", "feedback", ].map((tab) => (
+          {["projects", "progress", "feedback"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center px-4 py-2 text-sm font-medium transition-all duration-200 rounded-t-lg ${
+              className={`flex items-center px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-t-lg ${
                 activeTab === tab
                   ? "bg-indigo-500 text-white"
-                  : "text-gray-00 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
             >
               <FontAwesomeIcon
                 icon={
                   tab === "projects" ? faTasks : tab === "progress" ? faChartLine : tab === "feedback" ? faComments : faCalendarAlt
                 }
-                className="mr-2 w-4 h-4"
+                className="mr-1 sm:mr-2 w-3 h-3 sm:w-4 sm:h-4"
               />
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === "feedback" && unreadFeedbackCount > 0 && (
-                <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{unreadFeedbackCount}</span>
+                <span className="ml-1 sm:ml-2 bg-red-500 text-white text-xs rounded-full px-1.5 sm:px-2 py-0.5">{unreadFeedbackCount}</span>
               )}
             </button>
           ))}
         </div>
 
-        {/* Attendance Tab */}
         {activeTab === "attendance" && (
-          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden transition-colors duration-300">
-            <div className="p-6">
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
+            <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-indigo-500 dark:text-indigo-400 w-5 h-5" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-indigo-500 dark:text-indigo-400 w-4 h-4 sm:w-5 sm:h-5" />
                   Attendance Records
                 </h3>
                 <div className="flex items-center space-x-2">
-                  <label className="text-sm text-gray-700 dark:text-gray-300">Filter:</label>
+                  <label className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Filter:</label>
                   <select
                     value={attendanceFilter}
                     onChange={(e) => setAttendanceFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                    className="px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs sm:text-sm"
                   >
                     <option value="all">All</option>
                     <option value="Present">Present</option>
@@ -562,21 +540,21 @@ function InternDashboard() {
                   </select>
                 </div>
               </div>
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <button
                   onClick={handleToggleScanner}
-                  className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-sm w-full sm:w-auto justify-center"
+                  className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-xs sm:text-sm w-full sm:w-auto justify-center"
                   disabled={loading}
                 >
-                  <FontAwesomeIcon icon={faQrcode} className="mr-2 w-4 h-4" />
+                  <FontAwesomeIcon icon={faQrcode} className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
                   {showScanner ? "Hide QR Scanner" : "Scan QR Code"}
                 </button>
                 {showScanner && (
                   <div className="mt-4">
                     <div className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 bg-gray-50 dark:bg-gray-700">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Position your QR code within the frame below:</p>
-                      <video ref={videoRef} className="w-full max-w-md h-auto rounded-lg" />
-                      {scannerError && <p className="text-red-500 dark:text-red-400 text-sm mt-2">{scannerError}</p>}
+                      <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 mb-2">Position your QR code within the frame below:</p>
+                      <video ref={videoRef} className="w-full max-w-[320px] sm:max-w-md h-auto rounded-lg mx-auto" />
+                      {scannerError && <p className="text-red-500 dark:text-red-400 text-xs sm:text-sm mt-2">{scannerError}</p>}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Ensure good lighting and hold the QR code steady.</p>
                     </div>
                   </div>
@@ -587,41 +565,40 @@ function InternDashboard() {
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time In</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time Out</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notes</th>
+                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time In</th>
+                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time Out</th>
+                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notes</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {filteredAttendance.map((record, index) => (
                         <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{formatDate(record.date)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{record.status}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{record.timeIn || "N/A"}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{record.timeOut || "N/A"}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{record.notes || "N/A"}</td>
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Date">{formatDate(record.date)}</td>
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Status">{record.status}</td>
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Time In">{record.timeIn || "N/A"}</td>
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Time Out">{record.timeOut || "N/A"}</td>
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Notes">{record.notes || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">No attendance records found.</p>
+                <div className="text-center py-6 sm:py-8">
+                  <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">No attendance records found.</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Projects Tab */}
         {activeTab === "projects" && (
-          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden transition-colors duration-300">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <FontAwesomeIcon icon={faProjectDiagram} className="mr-2 text-indigo-500 dark:text-indigo-400 w-5 h-5" />
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
+            <div className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <FontAwesomeIcon icon={faProjectDiagram} className="mr-2 text-indigo-500 dark:text-indigo-400 w-4 h-4 sm:w-5 sm:h-5" />
                 Assigned Projects
               </h3>
               {studentData?.assignedProjects?.length > 0 ? (
@@ -633,8 +610,8 @@ function InternDashboard() {
                     >
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base">{project.title}</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{project.description}</p>
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">{project.title}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{project.description}</p>
                         </div>
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${
@@ -649,23 +626,23 @@ function InternDashboard() {
                         </span>
                       </div>
                       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <div className="flex flex-col sm:flex-row sm:items-center text-sm text-gray-500 dark:text-gray-400 gap-2 sm:gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 gap-2 sm:gap-4">
                           <span className="flex items-center">
-                            <FontAwesomeIcon icon={faCalendarAlt} className="mr-1 w-4 h-4" />
+                            <FontAwesomeIcon icon={faCalendarAlt} className="mr-1 w-3 h-3 sm:w-4 sm:h-4" />
                             Start Date: {formatDate(project.startDate)}
                           </span>
                           {project.endDate && (
                             <span className="flex items-center">
-                              <FontAwesomeIcon icon={faCalendarAlt} className="mr-1 w-4 h-4" />
+                              <FontAwesomeIcon icon={faCalendarAlt} className="mr-1 w-3 h-3 sm:w-4 sm:h-4" />
                               End Date: {formatDate(project.endDate)}
                             </span>
                           )}
                         </div>
                         <div className="mt-2">
-                          <div className="text-sm text-gray-700 dark:text-gray-300">Progress: {getProjectProgress(project)}%</div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                          <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Progress: {getProjectProgress(project)}%</div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div
-                              className="bg-indigo-500 dark:bg-indigo-400 h-2.5 rounded-full transition-all duration-500"
+                              className="bg-indigo-500 dark:bg-indigo-400 h-2 rounded-full transition-all duration-500"
                               style={{ width: `${getProjectProgress(project)}%` }}
                             ></div>
                           </div>
@@ -673,12 +650,12 @@ function InternDashboard() {
                       </div>
                       {project.tasks && project.tasks.length > 0 && (
                         <div className="mt-4">
-                          <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tasks</h5>
+                          <h5 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tasks</h5>
                           <ul className="space-y-2">
                             {project.tasks.map((task, index) => (
                               <li key={index} className="flex items-start">
                                 <span
-                                  className={`inline-block w-5 h-5 rounded-full mt-1 mr-2 flex-shrink-0 ${
+                                  className={`inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full mt-1 mr-2 flex-shrink-0 ${
                                     task.completed
                                       ? "bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700"
                                       : "bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600"
@@ -687,12 +664,12 @@ function InternDashboard() {
                                   {task.completed && (
                                     <FontAwesomeIcon
                                       icon={faCheckCircle}
-                                      className="text-green-500 dark:text-green-400 w-4 h-4 relative -left-[2px] -top-[2px]"
+                                      className="text-green-500 dark:text-green-400 w-3 h-3 sm:w-4 sm:h-4 relative -left-[2px] -top-[2px]"
                                     />
                                   )}
                                 </span>
                                 <span
-                                  className={`text-sm ${
+                                  className={`text-xs sm:text-sm ${
                                     task.completed ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"
                                   }`}
                                 >
@@ -707,33 +684,32 @@ function InternDashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
-                    <FontAwesomeIcon icon={faProjectDiagram} className="text-gray-400 dark:text-gray-500 text-xl" />
+                <div className="text-center py-6 sm:py-8">
+                  <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faProjectDiagram} className="text-gray-400 dark:text-gray-500 text-lg sm:text-xl" />
                   </div>
-                  <h4 className="text-gray-700 dark:text-gray-100 font-semibold text-base">No projects assigned</h4>
-                  <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Your supervisor will assign projects to you soon</p>
+                  <h4 className="text-gray-700 dark:text-gray-100 font-semibold text-sm sm:text-base">No projects assigned</h4>
+                  <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs sm:text-sm">Your supervisor will assign projects to you soon</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Progress Tab */}
         {activeTab === "progress" && (
-          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden transition-colors duration-300">
-            <div className="p-6">
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
+            <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                  <FontAwesomeIcon icon={faChartLine} className="mr-2 text-indigo-500 dark:text-indigo-400 w-5 h-5" />
+                <h3 className="text-base sm:text-lg fontsemantic text-gray-900 dark:text-gray-100 flex items-center">
+                  <FontAwesomeIcon icon={faChartLine} className="mr-2 text-indigo-500 dark:text-indigo-400 w-4 h-4 sm:w-5 sm:h-5" />
                   Progress Updates
                 </h3>
                 {studentData?.assignedProjects?.length > 0 && (
                   <button
                     onClick={() => document.getElementById("progress-form").scrollIntoView({ behavior: "smooth" })}
-                    className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-sm"
+                    className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-xs sm:text-sm"
                   >
-                    <FontAwesomeIcon icon={faPlus} className="mr-2 w-4 h-4" />
+                    <FontAwesomeIcon icon={faPlus} className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
                     New Update
                   </button>
                 )}
@@ -746,24 +722,24 @@ function InternDashboard() {
                       className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:shadow-sm transition duration-300"
                     >
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-2">
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
                           {formatDate(update.date || update.timestamp)}
                         </span>
                         {update.hasAdminFeedback && (
                           <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full flex items-center">
-                            <FontAwesomeIcon icon={faComments} className="mr-1 w-4 h-4" />
+                            <FontAwesomeIcon icon={faComments} className="mr-1 w-3 h-3 sm:w-4 sm:h-4" />
                             Feedback Received
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{update.content || update.text}</p>
+                      <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{update.content || update.text}</p>
                       {update.feedback && (
                         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                           <div className="flex items-center text-indigo-500 dark:text-indigo-400 mb-1">
-                            <FontAwesomeIcon icon={faComments} className="mr-2 w-4 h-4" />
-                            <span className="text-sm font-semibold">Supervisor Feedback</span>
+                            <FontAwesomeIcon icon={faComments} className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="text-xs sm:text-sm font-semibold">Supervisor Feedback</span>
                           </div>
-                          <div className="bg-indigo-50 dark:bg-indigo-900 p-3 rounded-lg text-sm text-gray-700 dark:text-gray-300">
+                          <div className="bg-indigo-50 dark:bg-indigo-900 p-3 rounded-lg text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                             {update.feedback}
                           </div>
                           {update.feedbackDate && (
@@ -777,26 +753,26 @@ function InternDashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
-                    <FontAwesomeIcon icon={faClipboardList} className="text-gray-400 dark:text-gray-500 text-xl" />
+                <div className="text-center py-6 sm:py-8">
+                  <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faClipboardList} className="text-gray-400 dark:text-gray-500 text-lg sm:text-xl" />
                   </div>
-                  <h4 className="text-gray-700 dark:text-gray-100 font-semibold text-base">No progress updates yet</h4>
-                  <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Submit your first progress update below</p>
+                  <h4 className="text-gray-700 dark:text-gray-100 font-semibold text-sm sm:text-base">No progress updates yet</h4>
+                  <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs sm:text-sm">Submit your first progress update below</p>
                 </div>
               )}
               {studentData?.assignedProjects?.length > 0 && (
-                <form id="progress-form" onSubmit={submitProgressUpdate} className="mt-8 border-t pt-6">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                    <FontAwesomeIcon icon={faPencilAlt} className="mr-2 text-indigo-500 dark:text-indigo-400 w-5 h-5" />
+                <form id="progress-form" onSubmit={submitProgressUpdate} className="mt-6 sm:mt-8 border-t pt-4 sm:pt-6">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                    <FontAwesomeIcon icon={faPencilAlt} className="mr-2 text-indigo-500 dark:text-indigo-400 w-4 h-4 sm:w-5 sm:h-5" />
                     Submit New Progress Update
                   </h4>
                   <div className="mb-4">
-                    <label className="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">Select Project</label>
+                    <label className="block text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-semibold mb-2">Select Project</label>
                     <select
                       value={selectedProjectId}
                       onChange={(e) => setSelectedProjectId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                      className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs sm:text-sm"
                       required
                     >
                       <option value="">Select a project</option>
@@ -812,24 +788,24 @@ function InternDashboard() {
                       value={progressUpdate}
                       onChange={(e) => setProgressUpdate(e.target.value)}
                       placeholder="What did you accomplish today? What challenges did you face? What are your next steps?"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none h-32 text-sm"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none h-24 sm:h-32 text-xs sm:text-sm"
                       required
                     ></textarea>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {progressUpdate.length}/{maxProgressLength} characters
                     </p>
-                    {error && <div className="text-red-500 dark:text-red-400 text-sm mt-2">{error}</div>}
+                    {error && <div className="text-red-500 dark:text-red-400 text-xs sm:text-sm mt-2">{error}</div>}
                   </div>
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-sm"
+                      className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-xs sm:text-sm"
                       disabled={loading}
                     >
                       {loading ? (
                         <>
                           <svg
-                            className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -845,7 +821,7 @@ function InternDashboard() {
                         </>
                       ) : (
                         <>
-                          <FontAwesomeIcon icon={faCheckCircle} className="mr-2 w-4 h-4" />
+                          <FontAwesomeIcon icon={faCheckCircle} className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
                           Submit Update
                         </>
                       )}
@@ -857,12 +833,11 @@ function InternDashboard() {
           </div>
         )}
 
-        {/* Feedback Tab */}
         {activeTab === "feedback" && (
-          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden transition-colors duration-300">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <FontAwesomeIcon icon={faComments} className="mr-2 text-indigo-500 dark:text-indigo-400 w-5 h-5" />
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
+            <div className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <FontAwesomeIcon icon={faComments} className="mr-2 text-indigo-500 dark:text-indigo-400 w-4 h-4 sm:w-5 sm:h-5" />
                 Feedback from Supervisors
               </h3>
               {studentData?.projectFeedback?.length > 0 || studentData?.assignedProjects?.some((p) => p.feedback?.length > 0) ? (
@@ -872,14 +847,14 @@ function InternDashboard() {
                       project.feedback?.length > 0 && (
                         <div key={project._id} className="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                           <div className="flex items-center mb-3">
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base">{project.title}</h4>
+                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">{project.title}</h4>
                             <span className="ml-auto text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300 px-2 py-1 rounded-full">
                               Project Feedback
                             </span>
                           </div>
                           <div className="space-y-3">
                             {project.feedback.map((feedback, idx) => (
-                              <div key={idx} className="bg-indigo-50 dark:bg-indigo-900 p-3 rounded-lg text-sm">
+                              <div key={idx} className="bg-indigo-50 dark:bg-indigo-900 p-3 rounded-lg text-xs sm:text-sm">
                                 <p className="text-gray-700 dark:text-gray-300">{feedback.comment || feedback.content}</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(feedback.date)}</p>
                               </div>
@@ -894,7 +869,7 @@ function InternDashboard() {
                       className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:shadow-sm transition duration-300"
                     >
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-2">
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
                           {feedback.projectId
                             ? `Feedback on ${
                                 studentData.assignedProjects?.find((p) => p._id === feedback.projectId)?.title || "Project"
@@ -903,7 +878,7 @@ function InternDashboard() {
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(feedback.date)}</span>
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{feedback.content}</p>
+                      <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{feedback.content}</p>
                       {!feedback.isRead && (
                         <div className="mt-2 flex justify-end">
                           <button
@@ -918,12 +893,12 @@ function InternDashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
-                    <FontAwesomeIcon icon={faComments} className="text-gray-400 dark:text-gray-500 text-xl" />
+                <div className="text-center py-6 sm:py-8">
+                  <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
+                    <FontAwesomeIcon icon={faComments} className="text-gray-400 dark:text-gray-500 text-lg sm:text-xl" />
                   </div>
-                  <h4 className="text-gray-700 dark:text-gray-100 font-semibold text-base">No feedback yet</h4>
-                  <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Your supervisors will provide feedback on your work</p>
+                  <h4 className="text-gray-700 dark:text-gray-100 font-semibold text-sm sm:text-base">No feedback yet</h4>
+                  <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs sm:text-sm">Your supervisors will provide feedback on your work</p>
                 </div>
               )}
             </div>
@@ -949,7 +924,7 @@ function InternDashboard() {
             display: flex;
             flex-direction: column;
             border-bottom: 1px solid #e5e7eb;
-            padding: 1rem 0;
+            padding: 0.75rem 0;
           }
           td {
             display: flex;
@@ -961,6 +936,10 @@ function InternDashboard() {
             content: attr(data-label);
             font-weight: 600;
             color: #4b5563;
+            flex: 1;
+          }
+          td:not(:last-child) {
+            border-bottom: 1px solid #e5e7eb;
           }
         }
         video {

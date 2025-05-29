@@ -21,21 +21,21 @@ export default function InternshipPortal() {
 
   const particlesConfig = {
     particles: {
-      number: { value: 80, density: { enable: true, value_area: 800 } },
+      number: { value: 50, density: { enable: true, value_area: 800 } },
       color: { value: ["#4F46E5", "#10B981", "#EF4444"] },
       shape: { type: "circle" },
-      opacity: { value: 0.7 },
+      opacity: { value: 0.5 },
       size: { value: 3 },
       links: {
         enable: true,
-        distance: 150,
+        distance: 100,
         color: "#ffffff",
-        opacity: 0.4,
+        opacity: 0.3,
         width: 1
       },
       move: {
         enable: true,
-        speed: 3,
+        speed: 2,
         direction: "none",
         random: false,
         straight: false,
@@ -51,9 +51,9 @@ export default function InternshipPortal() {
         resize: true
       },
       modes: {
-        grab: { distance: 200, links: { opacity: 1 } },
-        repulse: { distance: 100, duration: 0.4 },
-        push: { particles_nb: 4 }
+        grab: { distance: 150, links: { opacity: 1 } },
+        repulse: { distance: 80, duration: 0.4 },
+        push: { particles_nb: 3 }
       }
     },
     retina_detect: true
@@ -96,59 +96,46 @@ export default function InternshipPortal() {
     name: "",
     username: "",
     password: "",
-    weeks: 8 // Default to 8 weeks
+    weeks: 8
   });
 
   const universities = [
-    
     "NED University",
-    
     "Others"
   ];
 
   const universityDepartments = {
-    
     "NED University": [
-          
       "Mechanical Engineering",
-    
-    
       "Automotive & Marine Engineering",
       "Electrical Engineering",
       "Computer & Information Systems Engineering",
       "Electronic Engineering",
-     
       "Software Engineering",
       "Computer Science & Information Technology",
       "Economics & Management Sciences",
       "Chemical Engineering",
-    
       "Environmental Engineering",
-
       "Economics & Finance",
     ],
-    "Others": ["Computer Science", "Software Engineering", "Information Technology", "Data Engineering",, "Ai Engineering"]
+    "Others": ["Computer Science", "Software Engineering", "Information Technology", "Data Engineering", "AI Engineering"]
   };
 
-  const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development",  "Embadding System", "Robotics"];
-  const weeksOptions = [8, 9, 10, 11, 12]; // Minimum 8 weeks
+  const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development", "Embedded System", "Robotics"];
+  const weeksOptions = [8, 9, 10, 11, 12];
 
-  // Validate Pakistani phone number (03XXXXXXXXX)otic
   const validatePakistaniNumber = (number) => {
     return /^03\d{9}$/.test(number);
   };
 
-  // Validate email format
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  // Validate LinkedIn URL
   const validateLinkedIn = (url) => {
     return /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+\/?$/.test(url);
   };
 
-  // Validate name (only letters and spaces)
   const validateName = (name) => {
     return /^[a-zA-Z\s]+$/.test(name);
   };
@@ -156,7 +143,6 @@ export default function InternshipPortal() {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = {...prev};
@@ -174,7 +160,7 @@ export default function InternshipPortal() {
       setFormData(prev => ({
         ...prev,
         [name]: value,
-        ...(name === 'university' ? { department: '' } : {}) // Reset department when university changes
+        ...(name === 'university' ? { department: '' } : {})
       }));
 
       if (name === 'firstName' || name === 'lastName') {
@@ -228,7 +214,6 @@ export default function InternshipPortal() {
     let isValid = true;
 
     if (stepToValidate === 1) {
-      // First Name validation
       if (!formData.firstName.trim()) {
         stepErrors.firstName = "First Name is required";
         isValid = false;
@@ -237,13 +222,11 @@ export default function InternshipPortal() {
         isValid = false;
       }
 
-      // Last Name validation
       if (formData.lastName && !validateName(formData.lastName)) {
         stepErrors.lastName = "Last Name should contain only letters";
         isValid = false;
       }
 
-      // Phone validation
       if (!formData.phone) {
         stepErrors.phone = "Phone Number is required";
         isValid = false;
@@ -252,7 +235,6 @@ export default function InternshipPortal() {
         isValid = false;
       }
 
-      // Email validation
       if (!formData.email) {
         stepErrors.email = "Email is required";
         isValid = false;
@@ -261,7 +243,6 @@ export default function InternshipPortal() {
         isValid = false;
       }
 
-      // LinkedIn validation
       if (!formData.linkedin) {
         stepErrors.linkedin = "LinkedIn Profile URL is required";
         isValid = false;
@@ -270,7 +251,6 @@ export default function InternshipPortal() {
         isValid = false;
       }
 
-      // DOB validation
       if (!formData.dob) {
         stepErrors.dob = "Date of Birth is required";
         isValid = false;
@@ -401,7 +381,7 @@ export default function InternshipPortal() {
         email: formData.email,
         username: generatedUsername,
         password: randomPassword,
-        duration: Math.round(formData.weeks / 4), // Convert weeks to months for internSchema
+        duration: Math.round(formData.weeks / 4),
         university: formData.university,
         department: formData.department,
         phone: formData.phone,
@@ -428,7 +408,7 @@ export default function InternshipPortal() {
         throw new Error(errorData.message || 'Registration failed. Please try again later.');
       }
 
-      toast.success('Registration successful!', { autoClose: 5000 });
+      toast.success('Registration successful!', { autoClose: 3000 });
       setSuccess('Your application has been submitted successfully.');
       setShowDownloadModal(true);
 
@@ -456,124 +436,122 @@ export default function InternshipPortal() {
     } catch (error) {
       console.error('Registration failed:', error);
       let errorMessage = error.message || 'Registration failed. Please try again later.';
-      toast.error(errorMessage, { autoClose: 5000 });
+      toast.error(errorMessage, { autoClose: 3000 });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden flex flex-col">
       <div id="particles-js" className="absolute inset-0 z-0"></div>
-      <ToastContainer position="top-center" autoClose={5000} />
-      <div className="relative z-10 flex justify-center items-center min-h-screen">
-        <div className="w-full max-w-4xl bg-gray-800 bg-opacity-90 backdrop-blur-lg p-8 rounded-xl shadow-2xl mx-4 my-8">
-          <div className="flex justify-between content-center">
-            <div className="w-20 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-sm mb-8">
-              <Image width={200} height={200} src={"/ncailogo.png"} alt="NCAI Logo" className="rounded-2xl" />
+      <ToastContainer position="top-center" autoClose={3000} theme="dark" />
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 py-6 sm:py-8">
+        <div className="w-full max-w-3xl bg-gray-800 bg-opacity-95 backdrop-blur-lg p-6 sm:p-8 rounded-xl shadow-2xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-6 sm:mb-8">
+            <div className="w-16 h-12 sm:w-20 sm:h-16 bg-gray-700 rounded-lg flex items-center justify-center mb-4 sm:mb-0">
+              <Image width={80} height={80} src={"/ncailogo.png"} alt="NCAI Logo" className="rounded-lg object-contain" />
             </div>
-            <h1 className="text-2xl font-bold text-center mb-8 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+            <h1 className="text-xl sm:text-2xl font-bold text-center bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
               NCAI INTERNSHIP PORTAL
             </h1>
           </div>
 
           {success && (
             <div className="mb-6 bg-green-900 bg-opacity-50 border-l-4 border-green-500 p-4 rounded">
-              <p className="text-green-200">{success}</p>
+              <p className="text-green-200 text-sm sm:text-base">{success}</p>
             </div>
           )}
 
           <div className="space-y-6">
             {step === 1 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <input
                     name="firstName"
                     placeholder="First Name *"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.firstName}
                   />
-                  {errors.firstName && <span className="text-red-400 text-sm">{errors.firstName}</span>}
+                  {errors.firstName && <span className="text-red-400 text-xs sm:text-sm">{errors.firstName}</span>}
                 </div>
                 <div>
                   <input
                     name="lastName"
                     placeholder="Last Name"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.lastName}
                   />
-                  {errors.lastName && <span className="text-red-400 text-sm">{errors.lastName}</span>}
+                  {errors.lastName && <span className="text-red-400 text-xs sm:text-sm">{errors.lastName}</span>}
                 </div>
-                <div className="w-full relative">
-  <div className="relative">
-    <input
-      type="date"
-      id="dob"
-      name="dob"
-      className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 peer text-base sm:text-sm"
-      onChange={handleChange}
-      value={formData.dob}
-      max={new Date().toISOString().split('T')[0]}
-    />
-    <label
-      htmlFor="dob"
-      className={`
-        absolute left-50 transition-all duration-200 pointer-events-none text-gray-400
-        peer-focus:-top-2 peer-focus:text-xs peer-focus:text-gray-300 peer-focus:bg-gray-700 peer-focus:px-1
-        ${formData.dob ? '-top-2 text-xs text-gray-300 bg-gray-700 px-1' : 'top-3 text-base sm:text-sm'}
-      `}
-    >
-      Date of Birth *
-    </label>
-  </div>
-  {errors.dob && (
-    <span className="text-red-400 text-sm mt-1 block">{errors.dob}</span>
-  )}
-</div>
+                <div className="relative">
+                  <input
+                    type="date"
+                    id="dob"
+                    name="dob"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 peer"
+                    onChange={handleChange}
+                    value={formData.dob}
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                  <label
+                    htmlFor="dob"
+                    className={`
+                      absolute left-3 transition-all duration-200 pointer-events-none text-gray-400
+                      peer-focus:-top-2 peer-focus:text-xs peer-focus:text-gray-300 peer-focus:bg-gray-700 peer-focus:px-1
+                      ${formData.dob ? '-top-2 text-xs text-gray-300 bg-gray-700 px-1' : 'top-3 text-sm'}
+                    `}
+                  >
+                    Date of Birth *
+                  </label>
+                  {errors.dob && (
+                    <span className="text-red-400 text-xs sm:text-sm mt-1 block">{errors.dob}</span>
+                  )}
+                </div>
                 <div>
                   <input
                     name="phone"
                     placeholder="Phone Number (03XXXXXXXXX) *"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.phone}
                     maxLength={11}
                   />
-                  {errors.phone && <span className="text-red-400 text-sm">{errors.phone}</span>}
+                  {errors.phone && <span className="text-red-400 text-xs sm:text-sm">{errors.phone}</span>}
                 </div>
                 <div>
                   <input
                     type="email"
                     name="email"
                     placeholder="Email *"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.email}
                   />
-                  {errors.email && <span className="text-red-400 text-sm">{errors.email}</span>}
+                  {errors.email && <span className="text-red-400 text-xs sm:text-sm">{errors.email}</span>}
                 </div>
                 <div>
                   <input
                     name="linkedin"
                     placeholder="LinkedIn Profile URL *"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.linkedin}
                     required
                   />
-                  {errors.linkedin && <span className="text-red-400 text-sm">{errors.linkedin}</span>}
+                  {errors.linkedin && <span className="text-red-400 text-xs sm:text-sm">{errors.linkedin}</span>}
                 </div>
               </div>
             )}
 
             {step === 2 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <select
                     name="university"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.university}
                   >
@@ -582,12 +560,12 @@ export default function InternshipPortal() {
                       <option key={uni} value={uni}>{uni}</option>
                     ))}
                   </select>
-                  {errors.university && <span className="text-red-400 text-sm">{errors.university}</span>}
+                  {errors.university && <span className="text-red-400 text-xs sm:text-sm">{errors.university}</span>}
                 </div>
                 <div>
                   <select
                     name="domain"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.domain}
                   >
@@ -596,12 +574,12 @@ export default function InternshipPortal() {
                       <option key={domain} value={domain}>{domain}</option>
                     ))}
                   </select>
-                  {errors.domain && <span className="text-red-400 text-sm">{errors.domain}</span>}
+                  {errors.domain && <span className="text-red-400 text-xs sm:text-sm">{errors.domain}</span>}
                 </div>
                 <div>
                   <select
                     name="department"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.department}
                     disabled={!formData.university}
@@ -615,7 +593,7 @@ export default function InternshipPortal() {
                 <div>
                   <select
                     name="weeks"
-                    className="w-full p-3 bg-gray-700 rounded-lg"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     value={formData.weeks}
                   >
@@ -624,83 +602,83 @@ export default function InternshipPortal() {
                       <option key={week} value={week}>{week} Weeks</option>
                     ))}
                   </select>
-                  {errors.weeks && <span className="text-red-400 text-sm">{errors.weeks}</span>}
+                  {errors.weeks && <span className="text-red-400 text-xs sm:text-sm">{errors.weeks}</span>}
                 </div>
               </div>
             )}
 
             {step === 3 && (
               <div className="space-y-4">
-                {/* <div {...getRootProps()} className="border-2 border-dashed border-gray-600 p-8 text-center rounded-lg cursor-pointer hover:border-blue-500 transition">
+                {/* <div {...getRootProps()} className="border-2 border-dashed border-gray-600 p-6 text-center rounded-lg cursor-pointer hover:border-blue-500 transition">
                   <input {...getInputProps()} />
-                  <p className="text-gray-300">Drag & drop profile picture (max 2MB) and resume (max 5MB) here, or click to select</p>
+                  <p className="text-gray-300 text-sm sm:text-base">Drag & drop profile picture (max 2MB) and resume (max 5MB) here, or click to select</p>
                   <p className="text-xs text-gray-400 mt-2">Accepted: JPG, PNG, PDF</p>
                   {previewImage && (
                     <div className="mt-4">
-                      <Image width={200} height={200} src={previewImage} alt="Profile Preview" className="w-32 h-32 rounded-full mx-auto object-cover" />
+                      <Image width={120} height={120} src={previewImage} alt="Profile Preview" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto object-cover" />
                     </div>
                   )}
                   {formData.resume && (
-                    <p className="mt-2 text-green-400">Resume uploaded: {formData.resume.name}</p>
+                    <p className="mt-2 text-green-400 text-sm sm:text-base">Resume uploaded: {formData.resume.name}</p>
                   )}
-                </div> */}
+                </div>
 
                 {resumeText && (
-                  <div className="bg-gray-700 p-4 rounded-lg max-h-40 overflow-y-auto">
-                    <h3 className="font-bold mb-2">Resume Preview:</h3>
-                    <p className="text-sm opacity-75">{resumeText.substring(0, 500)}...</p>
+                  <div className="bg-gray-700 p-4 rounded-lg max-h-32 overflow-y-auto">
+                    <h3 className="font-bold text-sm sm:text-base mb-2">Resume Preview:</h3>
+                    <p className="text-xs sm:text-sm opacity-75">{resumeText.substring(0, 300)}...</p>
                   </div>
-                )}
+                )} */}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="bg-gray-700 p-4 rounded-lg">
-                    <h3 className="font-bold mb-2">Personal Information</h3>
-                    <p><span className="text-gray-400">Name:</span> {formData.firstName} {formData.lastName}</p>
-                    <p><span className="text-gray-400">Email:</span> {formData.email}</p>
-                    <p><span className="text-gray-400">Phone:</span> {formData.phone}</p>
-                    <p><span className="text-gray-400">DOB:</span> {formData.dob || 'Not provided'}</p>
-                    <p><span className="text-gray-400">LinkedIn:</span> {formData.linkedin}</p>
+                    <h3 className="font-bold text-sm sm:text-base mb-2">Personal Information</h3>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">Name:</span> {formData.firstName} {formData.lastName}</p>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">Email:</span> {formData.email}</p>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">Phone:</span> {formData.phone}</p>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">DOB:</span> {formData.dob || 'Not provided'}</p>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">LinkedIn:</span> {formData.linkedin}</p>
                   </div>
                   <div className="bg-gray-700 p-4 rounded-lg">
-                    <h3 className="font-bold mb-2">Education Information</h3>
-                    <p><span className="text-gray-400">University:</span> {formData.university || 'Not selected'}</p>
-                    <p><span className="text-gray-400">Department:</span> {formData.department || 'Not selected'}</p>
-                    <p><span className="text-gray-400">Domain:</span> {formData.domain || 'Not selected'}</p>
+                    <h3 className="font-bold text-sm sm:text-base mb-2">Education Information</h3>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">University:</span> {formData.university || 'Not selected'}</p>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">Department:</span> {formData.department || 'Not selected'}</p>
+                    <p className="text-xs sm:text-sm"><span className="text-gray-400">Domain:</span> {formData.domain || 'Not selected'}</p>
                   </div>
                 </div>
 
                 <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="font-bold mb-2">Internship Details</h3>
-                  <p><span className="text-gray-400">Duration:</span> {formData.weeks} weeks</p>
+                  <h3 className="font-bold text-sm sm:text-base mb-2">Internship Details</h3>
+                  <p className="text-xs sm:text-sm"><span className="text-gray-400">Duration:</span> {formData.weeks} weeks</p>
                 </div>
 
                 <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="font-bold mb-2">Your Login Credentials</h3>
-                  <p><span className="text-gray-400">Username:</span> {credentials.username || formData.username || 'Will be generated'}</p>
-                  <p><span className="text-gray-400">Password:</span> {credentials.password || formData.password ? '••••••••' : 'Will be generated'}</p>
-                  <p className="text-yellow-400 text-sm mt-2">Please save these credentials securely!</p>
+                  <h3 className="font-bold text-sm sm:text-base mb-2">Your Login Credentials</h3>
+                  <p className="text-xs sm:text-sm"><span className="text-gray-400">Username:</span> {credentials.username || formData.username || 'Will be generated'}</p>
+                  <p className="text-xs sm:text-sm"><span className="text-gray-400">Password:</span> {credentials.password || formData.password ? '••••••••' : 'Will be generated'}</p>
+                  <p className="text-yellow-400 text-xs sm:text-sm mt-2">Please save these credentials securely!</p>
                 </div>
               </div>
             )}
 
-            <div className="flex items-center justify-between w-full mt-8 space-x-4">
+            <div className="flex items-center justify-between w-full mt-6 sm:mt-8 space-x-4">
               {step > 1 ? (
                 <button
                   onClick={() => setStep(prev => prev - 1)}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition"
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition text-sm sm:text-base"
                 >
                   Back
                 </button>
               ) : (
-                <div className="w-24" />
+                <div className="w-20 sm:w-24" />
               )}
 
-              <div className="flex space-x-3">
+              <div className="flex space-x-2 sm:space-x-3">
                 {[1, 2, 3].map(num => (
                   <button
                     key={num}
                     onClick={() => handleStepChange(num)}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-semibold transition text-sm sm:text-base
                       ${step === num ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}
                       ${step > num ? "bg-green-500 text-white" : ""}`}
                   >
@@ -712,7 +690,7 @@ export default function InternshipPortal() {
               {step < 3 ? (
                 <button
                   onClick={handleNext}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition text-sm sm:text-base"
                 >
                   Next
                 </button>
@@ -720,7 +698,7 @@ export default function InternshipPortal() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -728,9 +706,9 @@ export default function InternshipPortal() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Submitting...
+                     
                     </span>
-                  ) : 'Submit Application'}
+                  ) : 'Submit '}
                 </button>
               )}
             </div>
@@ -741,32 +719,32 @@ export default function InternshipPortal() {
       {showDownloadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4 text-green-400">Registration Successful!</h2>
-            <p className="mb-4">Your account has been created. Please download your credentials for future reference.</p>
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-400">Registration Successful!</h2>
+            <p className="mb-4 text-sm sm:text-base">Your account has been created. Please download your credentials for future reference.</p>
             
             <div className="bg-gray-700 p-4 rounded mb-4">
-              <p className="font-semibold">Username: <span className="text-blue-300">{credentials.username}</span></p>
-              <p className="font-semibold">Password: <span className="text-blue-300">{credentials.password}</span></p>
-              <p className="text-sm text-yellow-400 mt-2">You will need these credentials to login to your account.</p>
+              <p className="font-semibold text-sm sm:text-base">Username: <span className="text-blue-300">{credentials.username}</span></p>
+              <p className="font-semibold text-sm sm:text-base">Password: <span className="text-blue-300">{credentials.password}</span></p>
+              <p className="text-yellow-400 text-xs sm:text-sm mt-2">You will need these credentials to login to your account.</p>
             </div>
 
-            <div className="flex justify-between mt-6">
+            <div className="flex flex-col sm:flex-row justify-between mt-6 space-y-3 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={() => {
                   setShowDownloadModal(false);
                   setCredentials({ username: "", password: "" });
                   router.push('/Login');
                 }}
-                className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
+                className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500 text-sm sm:text-base"
               >
                 Skip Download
               </button>
               <button
                 ref={downloadRef}
                 onClick={downloadCredentials}
-                className="px-4 py-2 bg-green-600 rounded hover:bg-green-500 flex items-center"
+                className="px-4 py-2 bg-green-600 rounded hover:bg-green-500 flex items-center justify-center text-sm sm:text-base"
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 Download Credentials
