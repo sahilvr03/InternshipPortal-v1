@@ -51,7 +51,7 @@ function InternDashboard() {
   const maxProgressLength = 500;
 
   const axiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_URL || "http://192.168.8.113:8000",
+    baseURL: process.env.NEXT_PUBLIC_URL || "http://192.168.8.116:8000",
   });
 
   const isSecureContext =
@@ -60,7 +60,7 @@ function InternDashboard() {
       window.location.protocol === "https:" ||
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1" ||
-      window.location.hostname === "192.168.8.113");
+      window.location.hostname === "http://192.168.8.116");
   const isFileProtocol = typeof window !== "undefined" && window.location.protocol === "file:";
 
   useEffect(() => {
@@ -74,7 +74,7 @@ function InternDashboard() {
 
   useEffect(() => {
     if (isFileProtocol) {
-      setScannerError("Cannot access camera when running from file://. Please serve the app via http://192.168.8.113:3000 or https.");
+      setScannerError("Cannot access camera when running from file://. Please serve the app via http://192.168.8.116:3000 or https.");
       setShowPopup({
         visible: true,
         message: "Please run the app through a web server (e.g., npm run dev).",
@@ -234,13 +234,13 @@ function InternDashboard() {
       setScannerError(null);
       setLoading(true);
 
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("QR_ATTENDANCE_TOKEN");
       if (!token) {
         throw new Error("Authentication token missing");
       }
 
       const response = await axiosInstance.post(
-        `/api/interns/${user.id}/attendance/qr`,
+        `/api/admin/attendance/qr/${user.id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -494,7 +494,7 @@ function InternDashboard() {
 
 
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
-          {["projects", "progress", "feedback"].map((tab) => (
+          {["projects", "progress", "feedback", "attendance"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
