@@ -60,8 +60,7 @@ function InternDashboard() {
     (window.isSecureContext ||
       window.location.protocol === "http:" ||
       window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname === "http://192.168.104.177");
+      window.location.hostname === "127.0.0.1" );
   const isFileProtocol = typeof window !== "undefined" && window.location.protocol === "file:";
 
   useEffect(() => {
