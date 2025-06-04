@@ -52,7 +52,7 @@ function InternDashboard() {
   const maxProgressLength = 500;
 
   const axiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_URL || "http://192.168.8.116:8000",
+    baseURL: process.env.NEXT_PUBLIC_URL || "https://backend-internship-portal.vercel.app",
   });
 
   const isSecureContext =
