@@ -55,7 +55,13 @@ function InternDashboard() {
     baseURL: process.env.NEXT_PUBLIC_URL || "https://backend-internship-portal.vercel.app",
   });
 
- 
+  const isSecureContext =
+    typeof window !== "undefined" &&
+    (window.isSecureContext ||
+      window.location.protocol === "http:" ||
+      window.location.hostname === "https://scl-internship-portal.vercel.app" ||
+      window.location.hostname === "127.0.0.1" );
+  const isFileProtocol = typeof window !== "undefined" && window.location.protocol === "file:";
 
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
