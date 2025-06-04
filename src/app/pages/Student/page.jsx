@@ -261,12 +261,12 @@ function InternDashboard() {
       }
 
       const response = await axiosInstance.post(
-        `/api/admin/attendance/qr/${user.id}`, // Fixed: Use user.id instead of studentId.id
+        `/api/admin/attendance/qr/${studentId.id}`, // Fixed: Use user.id instead of studentId.id
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const updatedResponse = await axiosInstance.get(`/api/admin/attendance/qr/${user.id}`, {
+      const updatedResponse = await axiosInstance.get(`/api/admin/attendance/qr/${studentId.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
