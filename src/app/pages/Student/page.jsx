@@ -265,7 +265,7 @@ function InternDashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const updatedResponse = await axiosInstance.get(`/api/admin/attendance/qr/${user.id}`, {
+      const updatedResponse = await axiosInstance.post(`/api/admin/attendance/qr/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
