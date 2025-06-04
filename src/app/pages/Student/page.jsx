@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -28,7 +29,7 @@ import {
   faSun,
   faMoon,
 } from "@fortawesome/free-solid-svg-icons";
-import { BrowserQRCodeReader } from "@zxing/library";
+import { Html5Qrcode } from "html5-qrcode";
 
 function InternDashboard() {
   const [studentData, setStudentData] = useState(null);
@@ -47,7 +48,7 @@ function InternDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const videoRef = useRef(null);
-  const codeReader = useRef(null);
+  const html5QrCode = useRef(null);
   const maxProgressLength = 500;
 
   const axiosInstance = axios.create({
@@ -57,10 +58,10 @@ function InternDashboard() {
   const isSecureContext =
     typeof window !== "undefined" &&
     (window.isSecureContext ||
-      window.location.protocol === "https:" ||
+      window.location.protocol === "http:" ||
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1" ||
-      window.location.hostname === "http://192.168.8.116");
+      window.location.hostname === "http://192.168.104.177");
   const isFileProtocol = typeof window !== "undefined" && window.location.protocol === "file:";
 
   useEffect(() => {
@@ -73,8 +74,9 @@ function InternDashboard() {
   };
 
   useEffect(() => {
+    console.log("Context Check:", { isSecureContext, isFileProtocol, protocol: window.location.protocol, hostname: window.location.hostname });
     if (isFileProtocol) {
-      setScannerError("Cannot access camera when running from file://. Please serve the app via http://192.168.8.116:3000 or https.");
+      setScannerError("Cannot access camera when running from file://. Please serve the app via http://localhost:3000 or https.");
       setShowPopup({
         visible: true,
         message: "Please run the app through a web server (e.g., npm run dev).",
@@ -132,7 +134,9 @@ function InternDashboard() {
   }, [user, router]);
 
   const isCameraApiAvailable = () => {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    const isAvailable = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    console.log("Camera API Available:", isAvailable, navigator.mediaDevices);
+    return isAvailable;
   };
 
   const requestCameraPermission = async () => {
@@ -143,19 +147,25 @@ function InternDashboard() {
       if (!isCameraApiAvailable()) {
         throw new Error("Camera API is not supported in this browser or environment.");
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      console.log("Requesting camera permission...");
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      console.log("Camera permission granted");
       setCameraPermission("granted");
       stream.getTracks().forEach((track) => track.stop());
       return true;
     } catch (err) {
-      console.error("Camera permission error:", err.name, err.message);
+      console.error("Camera permission error:", {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+      });
       let errorMessage = "Camera access denied. Please enable camera permissions in your browser settings.";
       if (err.name === "NotAllowedError") {
         errorMessage = "Camera access was denied. Please allow camera access in your browser settings.";
       } else if (err.name === "NotFoundError") {
         errorMessage = "No camera found. Please ensure a camera is connected and available.";
       } else if (err.name === "SecurityError" || err.message.includes("secure context")) {
-        errorMessage = "Camera access requires a secure connection (HTTPS or localhost). Please use ngrok or serve via HTTPS.";
+        errorMessage = "Camera access requires a secure connection (HTTPS or localhost).";
       } else if (err.message.includes("Camera API is not supported")) {
         errorMessage = "This browser does not support the camera API. Please use a modern browser like Chrome or Firefox.";
       }
@@ -174,39 +184,47 @@ function InternDashboard() {
         setShowScanner(false);
         return;
       }
-      codeReader.current = new BrowserQRCodeReader();
-      codeReader.current
-        .decodeFromVideoDevice(null, videoRef.current, async (result, err) => {
-          if (result) {
-            await handleScan(result.getText());
+      html5QrCode.current = new Html5Qrcode("qr-reader");
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      html5QrCode.current
+        .start(
+          { facingMode: "environment" },
+          config,
+          async (decodedText, decodedResult) => {
+            console.log("QR Code scanned:", decodedText);
+            await handleScan(decodedText);
+          },
+          (errorMessage) => {
+            // Ignore scan errors (e.g., no QR code in frame)
+            console.debug("QR scan error:", errorMessage);
           }
-          if (err && err.name !== "NotFoundException") {
-            console.error("QR scanning error:", err.name, err.message);
-            setScannerError("Error scanning QR code. Please try again.");
-            setShowPopup({ visible: true, message: "Error scanning QR code.", isSuccess: false });
-          }
-        })
+        )
         .catch((err) => {
-          console.error("Camera initialization error:", err.name, err.message);
-          setScannerError("Unable to access camera. Please ensure camera permissions are granted.");
-          setShowPopup({ visible: true, message: "Unable to access camera.", isSuccess: false });
+          console.error("QR scanner initialization error:", err);
+          setScannerError("Unable to initialize QR scanner. Please ensure camera permissions are granted.");
+          setShowPopup({ visible: true, message: "Unable to initialize QR scanner.", isSuccess: false });
+          setShowScanner(false);
         });
     }
 
     return () => {
-      if (codeReader.current) {
-        codeReader.current.reset();
-        codeReader.current = null;
+      if (html5QrCode.current) {
+        html5QrCode.current
+          .stop()
+          .catch((err) => console.error("Error stopping QR scanner:", err));
+        html5QrCode.current = null;
       }
     };
   }, [showScanner, cameraPermission]);
 
   const handleToggleScanner = async () => {
+    console.log("Toggling scanner:", { showScanner, isSecureContext, isFileProtocol });
     if (!showScanner) {
       setScannerError(null);
       if (isFileProtocol || !isSecureContext) {
+        console.warn("Insecure context or file protocol detected");
         setScannerError(
-          "Camera access is not available when running from file:// or an insecure context. Please serve the app via http://192.168.8.113:3000 with ngrok HTTPS."
+          "Camera access is not available when running from file:// or an insecure context. Please serve via http://localhost:3000 or HTTPS."
         );
         setShowPopup({
           visible: true,
@@ -216,15 +234,18 @@ function InternDashboard() {
         return;
       }
       const hasPermission = await requestCameraPermission();
+      console.log("Permission result:", hasPermission);
       if (hasPermission) {
         setShowScanner(true);
       }
     } else {
       setShowScanner(false);
       setCameraPermission("prompt");
-      if (codeReader.current) {
-        codeReader.current.reset();
-        codeReader.current = null;
+      if (html5QrCode.current) {
+        html5QrCode.current
+          .stop()
+          .catch((err) => console.error("Error stopping QR scanner:", err));
+        html5QrCode.current = null;
       }
     }
   };
@@ -240,12 +261,12 @@ function InternDashboard() {
       }
 
       const response = await axiosInstance.post(
-        `/api/admin/attendance/qr/${user.id}`,
+        `/api/admin/attendance/qr/${user.id}`, // Fixed: Use user.id instead of studentId.id
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const updatedResponse = await axiosInstance.get(`/api/student/profile/${user.id}`, {
+      const updatedResponse = await axiosInstance.get(`/api/admin/attendance/qr/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -305,7 +326,7 @@ function InternDashboard() {
       setLoading(true);
       await axiosInstance.post(
         `/api/student/progress/${selectedProjectId}`,
-        { content: update },
+        { content: progressUpdate }, // Fixed: Use progressUpdate instead of update
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const response = await axiosInstance.get(`/api/student/profile/${user.id}`, {
@@ -467,31 +488,27 @@ function InternDashboard() {
 
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 dark:from-indigo-700 dark:via-purple-700 dark:to-indigo-800 rounded-2xl shadow-xl text-white p-6 sm:p-8 mb-8 transition-all duration-300">
-  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
-    <div>
-      <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 tracking-tight">
-        Welcome back, {studentData?.name?.split(" ")[0] || "Student"}!
-      </h2>
-      <p className="text-sm sm:text-base text-white/90 mb-1">
-        {studentData?.assignedProjects?.length > 0
-          ? `You have ${studentData.assignedProjects.length} active project${studentData.assignedProjects.length > 1 ? "s" : ""}.`
-          : "You currently have no assigned projects."}
-      </p>
-      <p className="text-sm sm:text-base text-white/80">
-        <span className="font-medium">Attendance Status:</span>{" "}
-        {studentData?.attendance?.length > 0
-          ? `${studentData.attendance[studentData.attendance.length - 1].status} on ${formatDate(
-              studentData.attendance[studentData.attendance.length - 1].date
-            )}`
-          : "No attendance recorded yet."}
-      </p>
-    </div>
-    {/* <div className="flex-shrink-0 bg-white dark:bg-gray-900 bg-opacity-30 dark:bg-opacity-10 p-4 rounded-full shadow-md hover:scale-105 transition-transform">
-      <FontAwesomeIcon icon={faUser} size="2x" className="text-indigo-100" />
-    </div> */}
-  </div>
-</div>
-
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 tracking-tight">
+                Welcome back, {studentData?.name?.split(" ")[0] || "Student"}!
+              </h2>
+              <p className="text-sm sm:text-base text-white/90 mb-1">
+                {studentData?.assignedProjects?.length > 0
+                  ? `You have ${studentData.assignedProjects.length} active project${studentData.assignedProjects.length > 1 ? "s" : ""}.`
+                  : "You currently have no assigned projects."}
+              </p>
+              <p className="text-sm sm:text-base text-white/80">
+                <span className="font-medium">Attendance Status:</span>{" "}
+                {studentData?.attendance?.length > 0
+                  ? `${studentData.attendance[studentData.attendance.length - 1].status} on ${formatDate(
+                      studentData.attendance[studentData.attendance.length - 1].date
+                    )}`
+                  : "No attendance recorded yet."}
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
           {["projects", "progress", "feedback", "attendance"].map((tab) => (
@@ -553,7 +570,7 @@ function InternDashboard() {
                   <div className="mt-4">
                     <div className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 bg-gray-50 dark:bg-gray-700">
                       <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 mb-2">Position your QR code within the frame below:</p>
-                      <video ref={videoRef} className="w-full max-w-[320px] sm:max-w-md h-auto rounded-lg mx-auto" />
+                      <div id="qr-reader" ref={videoRef} className="w-full max-w-[320px] sm:max-w-md h-auto rounded-lg mx-auto"></div>
                       {scannerError && <p className="text-red-500 dark:text-red-400 text-xs sm:text-sm mt-2">{scannerError}</p>}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Ensure good lighting and hold the QR code steady.</p>
                     </div>
@@ -700,7 +717,7 @@ function InternDashboard() {
           <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden">
             <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
-                <h3 className="text-base sm:text-lg fontsemantic text-gray-900 dark:text-gray-100 flex items-center">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                   <FontAwesomeIcon icon={faChartLine} className="mr-2 text-indigo-500 dark:text-indigo-400 w-4 h-4 sm:w-5 sm:h-5" />
                   Progress Updates
                 </h3>
@@ -942,12 +959,14 @@ function InternDashboard() {
             border-bottom: 1px solid #e5e7eb;
           }
         }
-        video {
+        #qr-reader {
           max-width: 100%;
           height: auto;
           border-radius: 0.5rem;
         }
       `}</style>
+
+      <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     </div>
   );
 }
