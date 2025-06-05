@@ -249,16 +249,19 @@ function InternDashboard() {
     }
   };
 
+const scanningRef = useRef(false); // At the top, outside handleScan
+
 const handleScan = async (decodedText) => {
-  if (!html5QrCode.current) return; // Ignore if scanner is not initialized
+  if (!html5QrCode.current || scanningRef.current) return; // prevent re-entry
+
+  scanningRef.current = true; // lock
+
   try {
     setScannerError(null);
     setLoading(true);
 
     const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("You need to log in first.");
-    }
+    if (!token) throw new Error("You need to log in first.");
 
     // Validate decodedText
     if (!decodedText || decodedText.includes('http') || decodedText.includes('backend-internship-portal')) {
@@ -277,12 +280,7 @@ const handleScan = async (decodedText) => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    // Stop scanner before updating state
-    await html5QrCode.current.stop();
-    html5QrCode.current = null;
-
     setStudentData(response.data);
-    setShowScanner(false);
     setShowPopup({
       visible: true,
       message: "Attendance marked successfully!",
@@ -296,16 +294,22 @@ const handleScan = async (decodedText) => {
       message: errorMessage,
       isSuccess: false,
     });
-    // Stop scanner on error
+  } finally {
+    // Stop scanner once and clean up
     if (html5QrCode.current) {
-      await html5QrCode.current.stop();
+      try {
+        await html5QrCode.current.stop();
+      } catch (e) {
+        console.warn("Error stopping scanner:", e);
+      }
       html5QrCode.current = null;
     }
+    scanningRef.current = false;
     setShowScanner(false);
-  } finally {
     setLoading(false);
   }
 };
+
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
