@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -28,6 +27,7 @@ import {
   faQrcode,
   faSun,
   faMoon,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -45,6 +45,7 @@ function InternDashboard() {
   const [cameraPermission, setCameraPermission] = useState("prompt");
   const [showPopup, setShowPopup] = useState({ visible: false, message: "", isSuccess: true });
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false); // New state for modal
   const { user, logout } = useAuth();
   const router = useRouter();
   const videoRef = useRef(null);
@@ -194,7 +195,6 @@ function InternDashboard() {
             await handleScan(decodedText);
           },
           (errorMessage) => {
-            // Ignore scan errors (e.g., no QR code in frame)
             console.debug("QR scan error:", errorMessage);
           }
         )
@@ -249,66 +249,62 @@ function InternDashboard() {
     }
   };
 
-const scanningRef = useRef(false); // At the top, outside handleScan
+  const scanningRef = useRef(false);
 
-const handleScan = async (decodedText) => {
-  if (!html5QrCode.current || scanningRef.current) return; // prevent re-entry
+  const handleScan = async (decodedText) => {
+    if (!html5QrCode.current || scanningRef.current) return;
 
-  scanningRef.current = true; // lock
+    scanningRef.current = true;
 
-  try {
-    setScannerError(null);
-    setLoading(true);
+    try {
+      setScannerError(null);
+      setLoading(true);
 
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("You need to log in first.");
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("You need to log in first.");
 
-    // Validate decodedText
-    if (!decodedText || decodedText.includes('http') || decodedText.includes('backend-internship-portal')) {
-      throw new Error("Wrong QR code scanned. Please use the attendance QR code.");
-    }
-
-    // Mark attendance
-    await axiosInstance.post(
-      `/api/admin/attendance/qr/${user.id}`,
-      { QR_ATTENDANCE_TOKEN: decodedText },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    // Fetch updated student profile
-    const response = await axiosInstance.get(`/api/student/profile/${user.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    setStudentData(response.data);
-    setShowPopup({
-      visible: true,
-      message: "Attendance marked successfully!",
-      isSuccess: true,
-    });
-  } catch (error) {
-    const errorMessage = error.response?.data?.error || error.message || "Failed to mark attendance.";
-    setScannerError(errorMessage);
-    setShowPopup({
-      visible: true,
-      message: errorMessage,
-      isSuccess: false,
-    });
-  } finally {
-    // Stop scanner once and clean up
-    if (html5QrCode.current) {
-      try {
-        await html5QrCode.current.stop();
-      } catch (e) {
-        console.warn("Error stopping scanner:", e);
+      if (!decodedText || decodedText.includes('http') || decodedText.includes('backend-internship-portal')) {
+        throw new Error("Wrong QR code scanned. Please use the attendance QR code.");
       }
-      html5QrCode.current = null;
+
+      await axiosInstance.post(
+        `/api/admin/attendance/qr/${user.id}`,
+        { QR_ATTENDANCE_TOKEN: decodedText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const response = await axiosInstance.get(`/api/student/profile/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setStudentData(response.data);
+      setShowPopup({
+        visible: true,
+        message: "Attendance marked successfully!",
+        isSuccess: true,
+      });
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message || "Failed to mark attendance.";
+      setScannerError(errorMessage);
+      setShowPopup({
+        visible: true,
+        message: errorMessage,
+        isSuccess: false,
+      });
+    } finally {
+      if (html5QrCode.current) {
+        try {
+          await html5QrCode.current.stop();
+        } catch (e) {
+          console.warn("Error stopping scanner:", e);
+        }
+        html5QrCode.current = null;
+      }
+      scanningRef.current = false;
+      setShowScanner(false);
+      setLoading(false);
     }
-    scanningRef.current = false;
-    setShowScanner(false);
-    setLoading(false);
-  }
-};
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -346,7 +342,7 @@ const handleScan = async (decodedText) => {
       setLoading(true);
       await axiosInstance.post(
         `/api/student/progress/${selectedProjectId}`,
-        { content: progressUpdate }, // Fixed: Use progressUpdate instead of update
+        { content: progressUpdate },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const response = await axiosInstance.get(`/api/student/profile/${user.id}`, {
@@ -433,7 +429,7 @@ const handleScan = async (decodedText) => {
             >
               Try Again
             </button>
-          </div>
+    </div>
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300 text-sm">
             <h4 className="font-medium mb-1">Debug Information:</h4>
             <p>
@@ -470,6 +466,40 @@ const handleScan = async (decodedText) => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showAttendanceModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 sm:px-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-indigo-500 dark:text-indigo-400 w-5 h-5" />
+                All Attendance Records
+              </h3>
+              <button
+                onClick={() => setShowAttendanceModal(false)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
+              </button>
+            </div>
+            {filteredAttendance.length > 0 ? (
+              <div className="space-y-3">
+                {filteredAttendance.map((record, index) => (
+                  <div key={index} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-sm text-gray-900 dark:text-gray-100">
+                    <p><span className="font-semibold">Date:</span> {formatDate(record.date)}</p>
+                    <p><span className="font-semibold">Status:</span> {record.status}</p>
+                    <p><span className="font-semibold">Time In:</span> {record.timeIn || "N/A"}</p>
+                    <p><span className="font-semibold">Time Out:</span> {record.timeOut || "N/A"}</p>
+                    <p><span className="font-semibold">Notes:</span> {record.notes || "N/A"}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-center">No attendance records found.</p>
+            )}
           </div>
         </div>
       )}
@@ -561,7 +591,7 @@ const handleScan = async (decodedText) => {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                   <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-indigo-500 dark:text-indigo-400 w-4 h-4 sm:w-5 sm:h-5" />
-                  Attendance Records
+                  Recent Attendance
                 </h3>
                 <div className="flex items-center space-x-2">
                   <label className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Filter:</label>
@@ -598,33 +628,32 @@ const handleScan = async (decodedText) => {
                 )}
               </div>
               {filteredAttendance.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                      <tr>
-                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time In</th>
-                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time Out</th>
-                        <th className="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {filteredAttendance.map((record, index) => (
-                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200">
-                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Date">{formatDate(record.date)}</td>
-                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Status">{record.status}</td>
-                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Time In">{record.timeIn || "N/A"}</td>
-                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Time Out">{record.timeOut || "N/A"}</td>
-                          <td className="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-500 dark:text-gray-300" data-label="Notes">{record.notes || "N/A"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <>
+                  <div className="space-y-3">
+                    {filteredAttendance.slice(0, 4).map((record, index) => (
+                      <div key={index} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-xs sm:text-sm text-gray-900 dark:text-gray-100">
+                        <p><span className="font-semibold">Date:</span> {formatDate(record.date)}</p>
+                        <p><span className="font-semibold">Status:</span> {record.status}</p>
+                        <p><span className="font-semibold">Time In:</span> {record.timeIn || "N/A"}</p>
+                        <p><span className="font-semibold">Time Out:</span> {record.timeOut || "N/A"}</p>
+                        <p><span className="font-semibold">Notes:</span> {record.notes || "N/A"}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {filteredAttendance.length > 4 && (
+                    <div className="mt-4 text-center text-gray-900 dark:text-gray-100">
+                      <button
+                        onClick={() => setShowAttendanceModal(true)}
+                        className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-xs sm:text-sm text-gray-900 dark:text-gray-100"
+                      >
+                        View More
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="text-center py-6 sm:py-8">
-                  <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">No attendance records found.</p>
+                <div className="text-center py-6 sm:py-8 ">
+                  <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm  ">No attendance records found.</p>
                 </div>
               )}
             </div>
