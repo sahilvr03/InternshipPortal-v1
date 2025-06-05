@@ -249,46 +249,42 @@ function InternDashboard() {
     }
   };
 
-  const handleScan = async (qrData) => {
-    try {
-      setScannerError(null);
-      setLoading(true);
+const handleScan = async (decodedText) => {
+  try {
+    setScannerError(null);
+    setLoading(true);
 
-      const token = localStorage.getItem("QR_ATTENDANCE_TOKEN");
-      if (!token) {
-        throw new Error("Authentication token missing");
-      }
-
-      const response = await axiosInstance.post(
-        `/api/admin/attendance/qr/${user.id}`, // Fixed: Use user.id instead of studentId.id
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const updatedResponse = await axiosInstance.post(`/api/admin/attendance/qr/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setStudentData(updatedResponse.data);
-      setShowScanner(false);
-      setShowPopup({
-        visible: true,
-        message: response.data.message || "Attendance marked successfully!",
-        isSuccess: true,
-      });
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || "Failed to mark attendance. Please try again.";
-      setScannerError(errorMessage);
-      setShowPopup({
-        visible: true,
-        message: errorMessage,
-        isSuccess: false,
-      });
-    } finally {
-      setLoading(false);
+    const token = localStorage.getItem("token"); // JWT token for authentication
+    if (!token) {
+      throw new Error("Authentication token missing");
     }
-  };
 
+    // Send the scanned QR code data as QR_ATTENDANCE_TOKEN
+    const response = await axiosInstance.post(
+      `/api/admin/attendance/qr/${user.id}`,
+      { QR_ATTENDANCE_TOKEN: decodedText }, // Send decodedText as the token
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setStudentData(response.data);
+    setShowScanner(false);
+    setShowPopup({
+      visible: true,
+      message: response.data.message || "Attendance marked successfully!",
+      isSuccess: true,
+    });
+  } catch (error) {
+    const errorMessage = error.response?.data?.error || "Failed to mark attendance. Please try again.";
+    setScannerError(errorMessage);
+    setShowPopup({
+      visible: true,
+      message: errorMessage,
+      isSuccess: false,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
