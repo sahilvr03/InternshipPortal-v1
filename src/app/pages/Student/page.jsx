@@ -250,6 +250,7 @@ function InternDashboard() {
   };
 
 const handleScan = async (decodedText) => {
+  if (!html5QrCode.current) return; // Ignore if scanner is not initialized
   try {
     setScannerError(null);
     setLoading(true);
@@ -276,6 +277,10 @@ const handleScan = async (decodedText) => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
+    // Stop scanner before updating state
+    await html5QrCode.current.stop();
+    html5QrCode.current = null;
+
     setStudentData(response.data);
     setShowScanner(false);
     setShowPopup({
@@ -291,6 +296,12 @@ const handleScan = async (decodedText) => {
       message: errorMessage,
       isSuccess: false,
     });
+    // Stop scanner on error
+    if (html5QrCode.current) {
+      await html5QrCode.current.stop();
+      html5QrCode.current = null;
+    }
+    setShowScanner(false);
   } finally {
     setLoading(false);
   }
