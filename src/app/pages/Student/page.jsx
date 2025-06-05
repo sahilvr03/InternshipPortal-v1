@@ -254,27 +254,37 @@ const handleScan = async (decodedText) => {
     setScannerError(null);
     setLoading(true);
 
-    const token = localStorage.getItem("token"); // JWT token for authentication
+    const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Authentication token missing");
+      throw new Error("You need to log in first.");
     }
 
-    // Send the scanned QR code data as QR_ATTENDANCE_TOKEN
-    const response = await axiosInstance.post(
+    // Validate decodedText
+    if (!decodedText || decodedText.includes('http') || decodedText.includes('backend-internship-portal')) {
+      throw new Error("Wrong QR code scanned. Please use the attendance QR code.");
+    }
+
+    // Mark attendance
+    await axiosInstance.post(
       `/api/admin/attendance/qr/${user.id}`,
-      { QR_ATTENDANCE_TOKEN: decodedText }, // Send decodedText as the token
+      { QR_ATTENDANCE_TOKEN: decodedText },
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
+    // Fetch updated student profile
+    const response = await axiosInstance.get(`/api/student/profile/${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
     setStudentData(response.data);
     setShowScanner(false);
     setShowPopup({
       visible: true,
-      message: response.data.message || "Attendance marked successfully!",
+      message: "Attendance marked successfully!",
       isSuccess: true,
     });
   } catch (error) {
-    const errorMessage = error.response?.data?.error || "Failed to mark attendance. Please try again.";
+    const errorMessage = error.response?.data?.error || error.message || "Failed to mark attendance.";
     setScannerError(errorMessage);
     setShowPopup({
       visible: true,
