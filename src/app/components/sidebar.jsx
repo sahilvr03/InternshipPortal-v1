@@ -48,7 +48,7 @@ export default function Sidebar() {
         { name: 'projects', label: 'Projects', icon: faProjectDiagram, link: '/Admin/projects' },
         { name: 'past-interns', label: 'Past Interns', icon: faHistory, link: '/Admin/past-interns' },
         { name: 'activities', label: 'Recent Activities', icon: faHistory, link: '/Admin/activities' },
-        { name: 'Data', label: 'Data', icon: faCog, link: '/Admin/studentManagment' },
+        { name: 'Attendance', label: 'Attendance', icon: faCog, link: '/Admin/studentManagment' },
       ];
 
   return (
