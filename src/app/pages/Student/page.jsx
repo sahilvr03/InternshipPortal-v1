@@ -45,7 +45,8 @@ function InternDashboard() {
   const [cameraPermission, setCameraPermission] = useState("prompt");
   const [showPopup, setShowPopup] = useState({ visible: false, message: "", isSuccess: true });
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showAttendanceModal, setShowAttendanceModal] = useState(false); // New state for modal
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [isScanDisabled, setIsScanDisabled] = useState(true); // <-- NEW: State for scan button rule
   const { user, logout } = useAuth();
   const router = useRouter();
   const videoRef = useRef(null);
@@ -61,7 +62,7 @@ function InternDashboard() {
     (window.isSecureContext ||
       window.location.protocol === "http:" ||
       window.location.hostname === "https://scl-internship-portal.vercel.app" ||
-      window.location.hostname === "127.0.0.1" );
+      window.location.hostname === "127.0.0.1");
   const isFileProtocol = typeof window !== "undefined" && window.location.protocol === "file:";
 
   useEffect(() => {
@@ -84,6 +85,37 @@ function InternDashboard() {
       });
     }
   }, []);
+
+  // <-- NEW: This entire useEffect block contains the core logic for the scan button rule
+  useEffect(() => {
+    if (!studentData || !studentData.attendance || studentData.attendance.length === 0) {
+      // If there's no data or no attendance records, the student should be able to scan.
+      setIsScanDisabled(false);
+      return;
+    }
+
+    // Get the most recent attendance record.
+    const lastAttendance = studentData.attendance[studentData.attendance.length - 1];
+    const lastScanTime = new Date(lastAttendance.date);
+
+    // Calculate the start of the day AFTER the last scan.
+    const nextDay = new Date(lastScanTime);
+    nextDay.setDate(lastScanTime.getDate() + 1);
+
+    // Set the next allowed scan time to 9:00:00 AM on that next day.
+    nextDay.setHours(9, 0, 0, 0);
+    const nextAllowedScanTime = nextDay;
+
+    const now = new Date();
+
+    // Disable the button if the current time is before the next allowed scan time.
+    if (now < nextAllowedScanTime) {
+      setIsScanDisabled(true);
+    } else {
+      setIsScanDisabled(false);
+    }
+  }, [studentData]); // This logic re-runs whenever studentData is updated.
+
 
   const unreadFeedbackCount =
     studentData?.projectFeedback?.filter((feedback) => !feedback.isRead).length || 0;
@@ -429,7 +461,7 @@ function InternDashboard() {
             >
               Try Again
             </button>
-    </div>
+          </div>
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300 text-sm">
             <h4 className="font-medium mb-1">Debug Information:</h4>
             <p>
@@ -552,8 +584,8 @@ function InternDashboard() {
                 <span className="font-medium">Attendance Status:</span>{" "}
                 {studentData?.attendance?.length > 0
                   ? `${studentData.attendance[studentData.attendance.length - 1].status} on ${formatDate(
-                      studentData.attendance[studentData.attendance.length - 1].date
-                    )}`
+                    studentData.attendance[studentData.attendance.length - 1].date
+                  )}`
                   : "No attendance recorded yet."}
               </p>
             </div>
@@ -565,11 +597,10 @@ function InternDashboard() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-t-lg ${
-                activeTab === tab
+              className={`flex items-center px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-t-lg ${activeTab === tab
                   ? "bg-indigo-500 text-white"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
+                }`}
             >
               <FontAwesomeIcon
                 icon={
@@ -607,15 +638,25 @@ function InternDashboard() {
                   </select>
                 </div>
               </div>
+              {/* V-- MODIFIED BLOCK STARTS HERE --V */}
               <div className="mb-4 sm:mb-6">
                 <button
                   onClick={handleToggleScanner}
-                  className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-xs sm:text-sm w-full sm:w-auto justify-center"
-                  disabled={loading}
+                  className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-600 dark:hover:bg-indigo-700 transition duration-200 text-xs sm:text-sm w-full sm:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading || isScanDisabled}
                 >
                   <FontAwesomeIcon icon={faQrcode} className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
                   {showScanner ? "Hide QR Scanner" : "Scan QR Code"}
                 </button>
+
+                {isScanDisabled && studentData?.attendance?.length > 0 && (
+                  <div className="mt-2 text-center sm:text-left">
+                    <p className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400 font-medium">
+                      You can mark attendance again after 9:00 AM on the next day.
+                    </p>
+                  </div>
+                )}
+                
                 {showScanner && (
                   <div className="mt-4">
                     <div className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 bg-gray-50 dark:bg-gray-700">
@@ -627,6 +668,7 @@ function InternDashboard() {
                   </div>
                 )}
               </div>
+              {/* ^-- MODIFIED BLOCK ENDS HERE --^ */}
               {filteredAttendance.length > 0 ? (
                 <>
                   <div className="space-y-3">
@@ -680,13 +722,12 @@ function InternDashboard() {
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{project.description}</p>
                         </div>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            project.status === "Completed"
+                          className={`text-xs px-2 py-1 rounded-full ${project.status === "Completed"
                               ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
                               : project.status === "In Progress"
-                              ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300"
-                              : "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300"
-                          }`}
+                                ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300"
+                                : "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300"
+                            }`}
                         >
                           {project.status}
                         </span>
@@ -721,11 +762,10 @@ function InternDashboard() {
                             {project.tasks.map((task, index) => (
                               <li key={index} className="flex items-start">
                                 <span
-                                  className={`inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full mt-1 mr-2 flex-shrink-0 ${
-                                    task.completed
+                                  className={`inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full mt-1 mr-2 flex-shrink-0 ${task.completed
                                       ? "bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700"
                                       : "bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600"
-                                  }`}
+                                    }`}
                                 >
                                   {task.completed && (
                                     <FontAwesomeIcon
@@ -735,9 +775,8 @@ function InternDashboard() {
                                   )}
                                 </span>
                                 <span
-                                  className={`text-xs sm:text-sm ${
-                                    task.completed ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"
-                                  }`}
+                                  className={`text-xs sm:text-sm ${task.completed ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"
+                                    }`}
                                 >
                                   {task.title || task}
                                 </span>
@@ -937,9 +976,8 @@ function InternDashboard() {
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-2">
                         <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
                           {feedback.projectId
-                            ? `Feedback on ${
-                                studentData.assignedProjects?.find((p) => p._id === feedback.projectId)?.title || "Project"
-                              }`
+                            ? `Feedback on ${studentData.assignedProjects?.find((p) => p._id === feedback.projectId)?.title || "Project"
+                            }`
                             : "General Feedback"}
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(feedback.date)}</span>

@@ -88,8 +88,8 @@ export default function InternshipPortal() {
     phone: "",
     email: "",
     university: "",
-    domain: "",
     department: "",
+    domain: "",
     linkedin: "",
     profilePic: null,
     resume: null,
@@ -121,7 +121,7 @@ export default function InternshipPortal() {
     "Others": ["Computer Science", "Software Engineering", "Information Technology", "Data Engineering", "AI Engineering"]
   };
 
-  const domains = ["AI", "Machine Learning", "Web Development", "Mobile Development", "Embedded System", "Robotics"];
+  const domains = ["AI", "Machine Learning", "Web Development", "Mobile App Development", "Embedded Systems", "Robotics", "Others"];
   const weeksOptions = [8, 9, 10, 11, 12];
 
   const validatePakistaniNumber = (number) => {
@@ -419,8 +419,8 @@ export default function InternshipPortal() {
         phone: "",
         email: "",
         university: "",
-        domain: "",
         department: "",
+        domain: "",
         linkedin: "",
         profilePic: null,
         resume: null,
@@ -450,10 +450,10 @@ export default function InternshipPortal() {
         <div className="w-full max-w-3xl bg-gray-800 bg-opacity-95 backdrop-blur-lg p-6 sm:p-8 rounded-xl shadow-2xl">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-6 sm:mb-8">
             <div className="w-16 h-12 sm:w-20 sm:h-16 bg-gray-700 rounded-lg flex items-center justify-center mb-4 sm:mb-0">
-              <Image width={80} height={80} src={"/ncailogo.png"} alt="NCAI Logo" className="rounded-lg object-contain" />
+              <Image width={80} height={80} src={"/scl.png"} alt="NCAI Logo" className="rounded-lg object-contain" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-center bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-              NCAI INTERNSHIP PORTAL
+              SCL INTERNSHIP PORTAL
             </h1>
           </div>
 
@@ -562,6 +562,20 @@ export default function InternshipPortal() {
                   </select>
                   {errors.university && <span className="text-red-400 text-xs sm:text-sm">{errors.university}</span>}
                 </div>
+                   <div>
+                  <select
+                    name="department"
+                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
+                    onChange={handleChange}
+                    value={formData.department}
+                    disabled={!formData.university}
+                  >
+                    <option value="">Select Your Department</option>
+                    {formData.university && universityDepartments[formData.university]?.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <select
                     name="domain"
@@ -576,20 +590,7 @@ export default function InternshipPortal() {
                   </select>
                   {errors.domain && <span className="text-red-400 text-xs sm:text-sm">{errors.domain}</span>}
                 </div>
-                <div>
-                  <select
-                    name="department"
-                    className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
-                    onChange={handleChange}
-                    value={formData.department}
-                    disabled={!formData.university}
-                  >
-                    <option value="">Select Your Department</option>
-                    {formData.university && universityDepartments[formData.university]?.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
-                </div>
+             
                 <div>
                   <select
                     name="weeks"
