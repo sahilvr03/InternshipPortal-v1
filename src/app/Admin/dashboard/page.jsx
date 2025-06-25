@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import RouteGuard from '../../components/RouteGuard';
-import Navbar from "../../components/navbar";
-import Sidebar from "../../components/sidebar";
+import Sidebar from '../../components/sidebar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUser, faTrash, faPencilAlt, faEye,
   faCheckCircle, faTimesCircle, faExclamationTriangle,
   faGraduationCap, faProjectDiagram, faClipboardList,
-  faSignOutAlt, faPlus, faAngleDown, faAngleUp
+  faSignOutAlt, faPlus, faAngleDown, faAngleUp, faTimes, faDownload, faSearch
 } from '@fortawesome/free-solid-svg-icons';
+import { saveAs } from 'file-saver';
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_URL,
@@ -51,6 +51,16 @@ function Dashboard() {
   const [projectFeedback, setProjectFeedback] = useState('');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showPasswordField, setShowPasswordField] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Helper function to sort interns by createdAt (latest first)
+  const sortInternsByCreatedAt = (internsArray) => {
+    return [...internsArray].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.lastActive || '1970-01-01');
+      const dateB = new Date(b.createdAt || b.lastActive || '1970-01-01');
+      return dateB - dateA; // Descending order
+    });
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -71,7 +81,10 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        setInterns(internsResponse.data || []);
+        // Sort interns by createdAt
+        const sortedInterns = sortInternsByCreatedAt(internsResponse.data || []);
+
+        setInterns(sortedInterns);
         setProjects(projectsResponse.data || []);
 
         try {
@@ -107,6 +120,39 @@ function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  // Function to download interns data as CSV
+  const downloadInternsCSV = () => {
+    const headers = [
+      'No.', 'Name', 'Email', 'Username', 'Department', 'Domain', 'Week', 'Program', 'University',
+      'Contact Number', 'Bio', 'Duration (Months)', 'Joining Date', 'Progress (%)'
+    ];
+
+    const rows = interns.map((intern, index) => [
+      index + 1,
+      intern.name || 'N/A',
+      intern.email || 'N/A',
+      intern.student?.username || intern.username || 'N/A',
+      intern.student?.department || 'N/A',
+      intern.student?.domain || 'N/A',
+      intern.student?.week || 'N/A',
+      intern.student?.program || 'N/A',
+      intern.student?.university || intern.university || 'N/A',
+      intern.student?.contactNumber || 'N/A',
+      intern.student?.bio || 'N/A',
+      intern.duration || 'N/A',
+      formatDate(intern.joiningDate) || 'N/A',
+      intern.progress || 0
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, 'interns_data.csv');
+  };
+
   const handleUpdateProjectStatus = async (projectId, newStatus) => {
     try {
       setLoading(true);
@@ -119,7 +165,7 @@ function Dashboard() {
       const now = new Date();
       const formattedDate = now.toLocaleString();
 
-      const response = await axiosInstance.put(
+      await axiosInstance.put(
         `/api/admin/projects/${projectId}`,
         {
           status: newStatus,
@@ -167,7 +213,7 @@ function Dashboard() {
       }
 
       alert(`Project status updated to ${newStatus}`);
-    } catch (error) {
+      } catch (error) {
       console.error('Error updating project status:', error);
       alert(`Failed to update project status: ${error.response?.data?.error || error.message}`);
     } finally {
@@ -233,7 +279,10 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setInterns(response.data);
+      // Sort interns by createdAt
+      const sortedInterns = sortInternsByCreatedAt(response.data);
+
+      setInterns(sortedInterns);
       setStats(prev => ({
         ...prev,
         students: response.data.length,
@@ -305,7 +354,10 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setInterns(response.data);
+      // Sort interns by createdAt
+      const sortedInterns = sortInternsByCreatedAt(response.data);
+
+      setInterns(sortedInterns);
       setNewIntern({
         name: '',
         email: '',
@@ -342,7 +394,10 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setInterns(response.data);
+      // Sort interns by createdAt
+      const sortedInterns = sortInternsByCreatedAt(response.data);
+
+      setInterns(sortedInterns);
       setStats(prev => ({
         ...prev,
         students: response.data.length,
@@ -412,11 +467,14 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setInterns(response.data);
-      alert(`Attendance for ${interns.find(intern => intern._id === internId)?.name || 'intern'} marked as ${status}`);
+      // Sort interns by createdAt
+      const sortedInterns = sortInternsByCreatedAt(response.data);
+
+      setInterns(sortedInterns);
+      alert(`Attendance for ${sortedInterns.find(intern => intern._id === internId)?.name || 'intern'} marked as ${status}`);
 
       if (selectedIntern && selectedIntern._id === internId) {
-        const updatedIntern = response.data.find(i => i._id === internId);
+        const updatedIntern = sortedInterns.find(i => i._id === internId);
         if (updatedIntern) setSelectedIntern(updatedIntern);
       }
     } catch (error) {
@@ -532,6 +590,13 @@ function Dashboard() {
     }
   };
 
+  // Filter interns based on search query
+  const filteredInterns = interns.filter(intern =>
+    intern.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    intern.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (intern.student?.username || intern.username || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -561,7 +626,6 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-100 flex font-sans">
       <Sidebar />
       <div className="flex-1">
-        
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -575,7 +639,7 @@ function Dashboard() {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+        <main className="max-w mx-auto py-8 sm:px-6 lg:px-8">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm bg-opacity-80">
@@ -618,7 +682,20 @@ function Dashboard() {
                 <>
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold text-gray-900">Intern Management</h2>
-                    <div className="flex space-x-3">
+                    <div className="flex space-x-3 items-center">
+                      <div className="relative">
+                        <FontAwesomeIcon
+                          icon={faSearch}
+                          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Search by name, email, or username"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-64"
+                        />
+                      </div>
                       <button
                         onClick={openAddInternForm}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center"
@@ -642,6 +719,13 @@ function Dashboard() {
                           </>
                         )}
                       </button>
+                      <button
+                        onClick={downloadInternsCSV}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center"
+                      >
+                        <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                        Download CSV
+                      </button>
                     </div>
                   </div>
 
@@ -650,16 +734,21 @@ function Dashboard() {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Week</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {interns.length > 0 ? (
-                          interns.map((intern) => (
+                        {filteredInterns.length > 0 ? (
+                          filteredInterns.map((intern, index) => (
                             <tr key={intern._id} className="hover:bg-gray-50 transition-all duration-200">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
@@ -667,23 +756,14 @@ function Dashboard() {
                                   </div>
                                   <div className="ml-4">
                                     <div className="text-sm font-medium text-gray-900">{intern.name}</div>
-                                    <div className="text-xs text-gray-500">{intern.username}</div>
+                                    <div className="text-xs text-gray-500">{intern.student?.username || intern.username}</div>
                                   </div>
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.email}</td>
-                              {/* <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                  <div
-                                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                    style={{ width: `${calculateProgress(intern)}%` }}
-                                  ></div>
-                                </div>
-                                <span className="text-xs text-gray-500">{calculateProgress(intern)}%</span>
-                              </td> */}
-                              {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {formatDate(intern.lastActive)}
-                              </td> */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.student?.department || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.student?.domain || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.student?.week || 'N/A'}</td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex space-x-2">
                                   <button
@@ -745,7 +825,9 @@ function Dashboard() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="6" className="px-6 py-4 text-center text-gray-500">No interns found.</td>
+                            <td colSpan="8" className="px-6 py-4 text-center text-gray-600">
+                              {searchQuery ? 'No interns match your search.' : 'No interns found.'}
+                            </td>
                           </tr>
                         )}
                       </tbody>
@@ -805,14 +887,14 @@ function Dashboard() {
                                       ))}
                                     </ul>
                                   ) : (
-                                    <span className="text-gray-500">No projects</span>
+                                    <span className="text-gray-500 text-sm">No projects</span>
                                   )}
                                 </td>
                               </tr>
                             ))
                           ) : (
                             <tr>
-                              <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No past interns found.</td>
+                              <td colSpan="5" className="px-6 py-4 text-center text-gray-600">No past interns found.</td>
                             </tr>
                           )}
                         </tbody>
@@ -884,7 +966,7 @@ function Dashboard() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No projects found.</td>
+                            <td colSpan="5" className="px-6 py-4 text-center text-gray-600">No projects found.</td>
                           </tr>
                         )}
                       </tbody>
@@ -917,7 +999,7 @@ function Dashboard() {
                   }}
                   className="text-gray-500 hover:text-gray-700 transition-all duration-200"
                 >
-                  <FontAwesomeIcon icon={faTimesCircle} size="lg" />
+                  <FontAwesomeIcon icon={faTimes} size="lg" />
                 </button>
               </div>
 
@@ -1046,7 +1128,7 @@ function Dashboard() {
                   onClick={() => setViewInternModalOpen(false)}
                   className="text-gray-500 hover:text-gray-700 transition-all duration-200"
                 >
-                  <FontAwesomeIcon icon={faTimesCircle} size="lg" />
+                  <FontAwesomeIcon icon={faTimes} size="lg" />
                 </button>
               </div>
 
@@ -1054,7 +1136,14 @@ function Dashboard() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
                   <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Email:</span> {selectedIntern.email}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Username:</span> {selectedIntern.username}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Username:</span> {selectedIntern.student?.username || selectedIntern.username}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Department:</span> {selectedIntern.student?.department || 'N/A'}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Domain:</span> {selectedIntern.student?.domain || 'N/A'}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Week:</span> {selectedIntern.student?.week || 'N/A'}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Program:</span> {selectedIntern.student?.program || 'N/A'}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">University:</span> {selectedIntern.student?.university || selectedIntern.university || 'N/A'}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Contact Number:</span> {selectedIntern.student?.contactNumber || 'N/A'}</p>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Bio:</span> {selectedIntern.student?.bio || 'N/A'}</p>
                   <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Duration:</span> {selectedIntern.duration} months</p>
                   <p className="text-sm text-gray-600"><span className="font-medium">Last Active:</span> {formatDate(selectedIntern.lastActive)}</p>
                 </div>
@@ -1115,7 +1204,7 @@ function Dashboard() {
                       <div key={index} className="border border-gray-100 p-4 rounded-lg bg-gray-50">
                         <div className="flex justify-between items-center mb-2">
                           <h4 className="font-medium text-gray-900">{project.title}</h4>
-                          <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(project.status)}`}>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getStatusClass(project.status)}`}>
                             {project.status}
                           </span>
                         </div>
@@ -1191,13 +1280,13 @@ function Dashboard() {
         {selectedIntern && showMessageModal && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-8 w-full max-w-lg shadow-2xl backdrop-blur-sm bg-opacity-95">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between mb-6 items-center-center-center">
                 <h2 className="text-2xl font-bold text-gray-900">Send Message to {selectedIntern.name}</h2>
                 <button
                   onClick={() => setShowMessageModal(false)}
                   className="text-gray-500 hover:text-gray-700 transition-all duration-200"
                 >
-                  <FontAwesomeIcon icon={faTimesCircle} size="lg" />
+                  <FontAwesomeIcon icon={faTimes} size="lg" />
                 </button>
               </div>
 
@@ -1241,7 +1330,7 @@ function Dashboard() {
                   onClick={() => setShowProjectModal(false)}
                   className="text-gray-500 hover:text-gray-700 transition-all duration-200"
                 >
-                  <FontAwesomeIcon icon={faTimesCircle} size="lg" />
+                  <FontAwesomeIcon icon={faTimes} size="lg" />
                 </button>
               </div>
 
@@ -1294,8 +1383,8 @@ function Dashboard() {
 
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Assigned Interns</h3>
-                {selectedProject.assignedTo && selectedProject.assignedTo.length > 0 ? (
-                  <ul className="list-disc pl-6 text-sm text-gray-600">
+                {projects.assignedTo?.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm text-gray-600">
                     {selectedProject.assignedTo.map((intern, index) => (
                       <li key={index} className="mb-2">
                         {typeof intern === 'string'
