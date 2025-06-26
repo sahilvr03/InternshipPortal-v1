@@ -388,11 +388,12 @@ export default function InternshipPortal() {
         dob: formData.dob,
         domain: formData.domain,
         linkedin: formData.linkedin,
+        weeks: formData.weeks,
         resume: formData.resume ? formData.resume.name : null,
         profilePic: formData.profilePic ? formData.profilePic.name : null,
       };
 
-      const response = await fetch('https://backend-internship-portal.vercel.app/api/interns', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/interns`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -427,7 +428,8 @@ export default function InternshipPortal() {
         name: "",
         username: "",
         password: "",
-        weeks: 8
+        weeks: 8,
+        
       });
 
       setPreviewImage("");
