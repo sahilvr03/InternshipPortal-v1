@@ -53,21 +53,21 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Hamburger Button (visible only on small screens) */}
-      <div className="md:hidden p-4 flex justify-between items-center bg-blue-900 text-white">
-        <h1 className="text-xl font-bold">NCAI Admin</h1>
-        <button onClick={() => setIsSidebarOpen(true)}>
+      {/* Hamburger Button (visible on mobile) */}
+      <div className="flex md:hidden p-4 bg-blue-900 text-white justify-between items-center sticky top-0 z-50">
+        <h1 className="text-lg sm:text-xl font-bold">NCAI Admin</h1>
+        <button onClick={() => setIsSidebarOpen(true)} className="p-2">
           <FontAwesomeIcon icon={faBars} size="lg" />
         </button>
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col bg-gradient-to-b from-gray-900 to-blue-800 text-white w-64 min-h-screen font-sans shadow-xl">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold tracking-wide">NCAI Admin</h1>
-          <p className="text-sm text-gray-300">Portal Dashboard</p>
+      <div className="hidden md:flex flex-col bg-gradient-to-b from-gray-900 to-blue-800 text-white w-56 lg:w-64 min-h-screen font-sans shadow-xl">
+        <div className="p-4 lg:p-6">
+          <h1 className="text-xl lg:text-2xl font-bold tracking-wide">NCAI Admin</h1>
+          <p className="text-xs lg:text-sm text-gray-300">Portal Dashboard</p>
         </div>
-        <nav className="flex-1 mt-4 space-y-1 px-2">
+        <nav className="flex-1 mt-2 lg:mt-4 space-y-1 px-2">
           {sidebarItems.map((item) => (
             <motion.div
               key={item.name}
@@ -76,27 +76,27 @@ export default function Sidebar() {
             >
               <Link
                 href={item.link}
-                className={`group flex items-center px-4 py-3 rounded-md transition-all duration-200 ${
+                className={`group flex items-center px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base rounded-md transition-all duration-200 ${
                   activeItem === item.name
                     ? 'bg-white text-blue-900 font-semibold shadow-md'
                     : 'hover:bg-blue-600 hover:bg-opacity-30'
                 }`}
                 onClick={() => setActiveItem(item.name)}
               >
-                <FontAwesomeIcon icon={item.icon} className="mr-3 text-lg" />
+                <FontAwesomeIcon icon={item.icon} className="mr-2 lg:mr-3 text-base lg:text-lg" />
                 <span>{item.label}</span>
               </Link>
             </motion.div>
           ))}
         </nav>
-        <div className="p-4 mt-auto border-t border-blue-600">
+        <div className="p-4 border-t border-blue-600">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleLogout}
-            className="w-full flex items-center justify-center px-4 py-3 text-white bg-red-600 hover:bg-red-700 transition-colors rounded-md shadow-md"
+            className="w-full flex items-center justify-center px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base bg-red-600 hover:bg-red-700 rounded-md shadow-md transition-colors"
           >
-            <FontAwesomeIcon icon={faSignOutAlt} className="mr-3" />
+            <FontAwesomeIcon icon={faSignOutAlt} className="mr-2 lg:mr-3" />
             <span>Logout</span>
           </motion.button>
         </div>
@@ -105,51 +105,60 @@ export default function Sidebar() {
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
-          <motion.div
-            initial={{ x: '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-            className="fixed top-0 left-0 z-50 w-64 h-full bg-gradient-to-b from-indigo-900 to-blue-700 text-white flex flex-col shadow-lg"
-          >
-            <div className="p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold">NCAI Admin</h2>
-              <button onClick={() => setIsSidebarOpen(false)}>
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <nav className="flex-1 mt-4 space-y-1 px-2">
-              {sidebarItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.link}
-                  className={`flex items-center px-4 py-3 rounded-md transition-all ${
-                    activeItem === item.name
-                      ? 'bg-white text-blue-900 font-semibold shadow-md'
-                      : 'hover:bg-blue-600 hover:bg-opacity-30'
-                  }`}
-                  onClick={() => {
-                    setActiveItem(item.name);
-                    setIsSidebarOpen(false);
-                  }}
+          <>
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+              className="fixed top-0 left-0 z-50 w-64 h-full bg-gradient-to-b from-indigo-900 to-blue-700 text-white flex flex-col shadow-lg"
+            >
+              <div className="p-4 flex justify-between items-center">
+                <h2 className="text-lg font-bold">NCAI Admin</h2>
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2">
+                  <FontAwesomeIcon icon={faTimes} size="lg" />
+                </button>
+              </div>
+              <nav className="flex-1 mt-4 space-y-1 px-2">
+                {sidebarItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.link}
+                    className={`flex items-center px-4 py-3 text-sm rounded-md transition-all ${
+                      activeItem === item.name
+                        ? 'bg-white text-blue-900 font-semibold shadow-md'
+                        : 'hover:bg-blue-600 hover:bg-opacity-30'
+                    }`}
+                    onClick={() => {
+                      setActiveItem(item.name);
+                      setIsSidebarOpen(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={item.icon} className="mr-3 text-base" />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </nav>
+              <div className="p-4 border-t border-blue-600">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center px-4 py-3 text-sm bg-red-600 hover:bg-red-700 rounded-md shadow-md transition-colors"
                 >
-                  <FontAwesomeIcon icon={item.icon} className="mr-3 text-lg" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-            <div className="p-4 mt-auto border-t border-blue-600">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center px-4 py-3 text-white bg-red-600 hover:bg-red-700 transition-colors rounded-md shadow-md"
-              >
-                <FontAwesomeIcon icon={faSignOutAlt} className="mr-3" />
-                <span>Logout</span>
-              </motion.button>
-            </div>
-          </motion.div>
+                  <FontAwesomeIcon icon={faSignOutAlt} className="mr-3" />
+                  <span>Logout</span>
+                </motion.button>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          </>
         )}
       </AnimatePresence>
     </>

@@ -348,7 +348,7 @@ export default function InternshipPortal() {
       `Email: ${formData.email}\n` +
       `Username: ${credentials.username}\n` +
       `Password: ${credentials.password}\n\n` +
-      `Please save these credentials securely. You will need them to login to your account.\n` +
+      `Please save these credentials securely. Your registration is pending admin approval. You will be able to log in once approved.\n` +
       `For security reasons, we recommend changing your password after first login.`
     ], { type: 'text/plain;charset=utf-8' });
     
@@ -381,19 +381,18 @@ export default function InternshipPortal() {
         email: formData.email,
         username: generatedUsername,
         password: randomPassword,
-        duration: Math.round(formData.weeks / 4),
+        contactNumber: formData.phone,
+        program: formData.department,
         university: formData.university,
-        department: formData.department,
-        phone: formData.phone,
-        dob: formData.dob,
         domain: formData.domain,
-        linkedin: formData.linkedin,
         weeks: formData.weeks,
+        dob: formData.dob,
+        linkedin: formData.linkedin,
         resume: formData.resume ? formData.resume.name : null,
         profilePic: formData.profilePic ? formData.profilePic.name : null,
       };
 
-      const response = await fetch('https://backend-internship-portal.vercel.app/api/interns', {
+      const response = await fetch('http://localhost:5000/api/student/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -402,15 +401,15 @@ export default function InternshipPortal() {
       });
 
       if (!response.ok) {
-        if (response.status === 409) {
-          throw new Error('This email is already registered.');
+        if (response.status === 400) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Registration failed. Email or username may already be in use.');
         }
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed. Please try again later.');
+        throw new Error('Registration failed. Please try again later.');
       }
 
-      toast.success('Registration successful!', { autoClose: 3000 });
-      setSuccess('Your application has been submitted successfully.');
+      toast.success('Registration submitted successfully! Awaiting admin approval.', { autoClose: 3000 });
+      setSuccess('Your registration has been submitted and is awaiting admin approval. You will receive your credentials once approved.');
       setShowDownloadModal(true);
 
       setFormData({
@@ -429,7 +428,6 @@ export default function InternshipPortal() {
         username: "",
         password: "",
         weeks: 8,
-        
       });
 
       setPreviewImage("");
@@ -564,7 +562,7 @@ export default function InternshipPortal() {
                   </select>
                   {errors.university && <span className="text-red-400 text-xs sm:text-sm">{errors.university}</span>}
                 </div>
-                   <div>
+                <div>
                   <select
                     name="department"
                     className="w-full p-3 bg-gray-700 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500"
@@ -592,7 +590,6 @@ export default function InternshipPortal() {
                   </select>
                   {errors.domain && <span className="text-red-400 text-xs sm:text-sm">{errors.domain}</span>}
                 </div>
-             
                 <div>
                   <select
                     name="weeks"
@@ -624,14 +621,14 @@ export default function InternshipPortal() {
                   {formData.resume && (
                     <p className="mt-2 text-green-400 text-sm sm:text-base">Resume uploaded: {formData.resume.name}</p>
                   )}
-                </div>
+                </div> */}
 
                 {resumeText && (
-                  <div className="bg-gray-700 p-4 rounded-lg max-h-32 overflow-y-auto">
+                  <div className="bg-gray-700/sl p-4 rounded-lg max-h-32 overflow-y-auto">
                     <h3 className="font-bold text-sm sm:text-base mb-2">Resume Preview:</h3>
                     <p className="text-xs sm:text-sm opacity-75">{resumeText.substring(0, 300)}...</p>
                   </div>
-                )} */}
+                )}
 
                 <div className="grid grid-cols-1 gap-4">
                   <div className="bg-gray-700 p-4 rounded-lg">
@@ -659,7 +656,7 @@ export default function InternshipPortal() {
                   <h3 className="font-bold text-sm sm:text-base mb-2">Your Login Credentials</h3>
                   <p className="text-xs sm:text-sm"><span className="text-gray-400">Username:</span> {credentials.username || formData.username || 'Will be generated'}</p>
                   <p className="text-xs sm:text-sm"><span className="text-gray-400">Password:</span> {credentials.password || formData.password ? '••••••••' : 'Will be generated'}</p>
-                  <p className="text-yellow-400 text-xs sm:text-sm mt-2">Please save these credentials securely!</p>
+                  <p className="text-yellow-400 text-xs sm:text-sm mt-2">Please save these credentials securely! You can log in after admin approval.</p>
                 </div>
               </div>
             )}
@@ -709,9 +706,9 @@ export default function InternshipPortal() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                     
+                      Submitting...
                     </span>
-                  ) : 'Submit '}
+                  ) : 'Submit'}
                 </button>
               )}
             </div>
@@ -722,13 +719,13 @@ export default function InternshipPortal() {
       {showDownloadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-400">Registration Successful!</h2>
-            <p className="mb-4 text-sm sm:text-base">Your account has been created. Please download your credentials for future reference.</p>
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-400">Registration Submitted!</h2>
+            <p className="mb-4 text-sm sm:text-base">Your registration is awaiting admin approval. Please download your credentials for future reference.</p>
             
             <div className="bg-gray-700 p-4 rounded mb-4">
               <p className="font-semibold text-sm sm:text-base">Username: <span className="text-blue-300">{credentials.username}</span></p>
               <p className="font-semibold text-sm sm:text-base">Password: <span className="text-blue-300">{credentials.password}</span></p>
-              <p className="text-yellow-400 text-xs sm:text-sm mt-2">You will need these credentials to login to your account.</p>
+              <p className="text-yellow-400 text-xs sm:text-sm mt-2">You will need these credentials to login once your registration is approved.</p>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between mt-6 space-y-3 sm:space-y-0 sm:space-x-3">

@@ -1,12 +1,11 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -80,7 +79,7 @@ export default function Login() {
     
     // Form validation
     const newErrors = {};
-    if (!email) newErrors.email = "Email or username is required";
+    if (!identifier) newErrors.identifier = "Email or username is required";
     if (!password) newErrors.password = "Password is required";
     
     setErrors(newErrors);
@@ -92,7 +91,7 @@ export default function Login() {
       setLoading(true);
       
       // Use the login function from AuthContext
-      const result = await login(email, password);
+      const result = await login(identifier, password);
       
       // Redirect based on user role
       if (result.success) {
@@ -134,10 +133,10 @@ export default function Login() {
                 type="text"
                 placeholder="Email or Username *"
                 className="w-full p-3 bg-gray-700 rounded-lg"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
               />
-              {errors.email && <span className="text-red-400 text-sm">{errors.email}</span>}
+              {errors.identifier && <span className="text-red-400 text-sm">{errors.identifier}</span>}
             </div>
             
             <div>

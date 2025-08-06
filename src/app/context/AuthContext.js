@@ -1,5 +1,4 @@
-'use client';
-
+"use client";
 import { createContext, useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -7,7 +6,7 @@ import axios from 'axios';
 const AuthContext = createContext();
 
 // Create Axios instance with base URL
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_URL,
 });
 
@@ -17,7 +16,6 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 403) {
       console.error('Access forbidden:', error.response.data);
-      // Don't redirect; let components handle 403
       return Promise.reject({
         ...error,
         isPermissionError: true,
@@ -57,7 +55,7 @@ export const AuthProvider = ({ children }) => {
             const userData = JSON.parse(userString);
             setUser(userData);
             // Silently verify token
-            verifyToken(token);
+            await verifyToken(token);
           } catch (err) {
             console.error('Error parsing user data:', err);
             localStorage.removeItem('user');
@@ -96,7 +94,6 @@ export const AuthProvider = ({ children }) => {
     loadUserFromStorage();
   }, []);
 
-  // Updated login function to support both email and username
   const login = async (identifier, password) => {
     try {
       const isEmail = identifier.includes('@');

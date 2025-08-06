@@ -58,7 +58,7 @@ function Dashboard() {
     return [...internsArray].sort((a, b) => {
       const dateA = new Date(a.createdAt || a.lastActive || '1970-01-01');
       const dateB = new Date(b.createdAt || b.lastActive || '1970-01-01');
-      return dateB - dateA; // Descending order
+      return dateB - dateA;
     });
   };
 
@@ -81,7 +81,6 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        // Sort interns by createdAt
         const sortedInterns = sortInternsByCreatedAt(internsResponse.data || []);
 
         setInterns(sortedInterns);
@@ -120,7 +119,6 @@ function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  // Function to download interns data as CSV
   const downloadInternsCSV = () => {
     const headers = [
       'No.', 'Name', 'Email', 'Username', 'Department', 'Domain', 'Week', 'Program', 'University',
@@ -213,7 +211,7 @@ function Dashboard() {
       }
 
       alert(`Project status updated to ${newStatus}`);
-      } catch (error) {
+    } catch (error) {
       console.error('Error updating project status:', error);
       alert(`Failed to update project status: ${error.response?.data?.error || error.message}`);
     } finally {
@@ -279,7 +277,6 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Sort interns by createdAt
       const sortedInterns = sortInternsByCreatedAt(response.data);
 
       setInterns(sortedInterns);
@@ -354,7 +351,6 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Sort interns by createdAt
       const sortedInterns = sortInternsByCreatedAt(response.data);
 
       setInterns(sortedInterns);
@@ -394,7 +390,6 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Sort interns by createdAt
       const sortedInterns = sortInternsByCreatedAt(response.data);
 
       setInterns(sortedInterns);
@@ -467,7 +462,6 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Sort interns by createdAt
       const sortedInterns = sortInternsByCreatedAt(response.data);
 
       setInterns(sortedInterns);
@@ -590,7 +584,6 @@ function Dashboard() {
     }
   };
 
-  // Filter interns based on search query
   const filteredInterns = interns.filter(intern =>
     intern.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     intern.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -608,12 +601,12 @@ function Dashboard() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Error</h3>
-          <p className="text-gray-600 mb-6">{error}</p>
+        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-full sm:max-w-md text-center">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Error</h3>
+          <p className="text-gray-600 mb-6 text-sm sm:text-base">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300"
+            className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 text-sm sm:text-base"
           >
             Try Again
           </button>
@@ -623,15 +616,15 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex font-sans">
+    <div className="flex min-h-screen bg-gray-100 font-sans">
       <Sidebar />
-      <div className="flex-1">
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+      <div className="flex-1 flex flex-col">
+        <header className="bg-white shadow-sm sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-0">Admin Dashboard</h1>
             <button
               onClick={logout}
-              className="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-all duration-300 flex items-center"
+              className="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-all duration-300 flex items-center text-sm sm:text-base"
             >
               <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
               Logout
@@ -639,51 +632,52 @@ function Dashboard() {
           </div>
         </header>
 
-        <main className="max-w mx-auto py-8 sm:px-6 lg:px-8">
+        <main className="flex-1 max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 overflow-auto">
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm bg-opacity-80">
-              <h2 className="text-sm font-medium text-gray-600 mb-2">Total Internships</h2>
-              <p className="text-3xl font-bold text-blue-600">{stats.students}</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm bg-opacity-80">
-              <h2 className="text-sm font-medium text-gray-600 mb-2">Active Interns</h2>
-              <p className="text-3xl font-bold text-emerald-600">{stats.activeInterns}</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm bg-opacity-80">
-              <h2 className="text-sm font-medium text-gray-600 mb-2">Completed Projects</h2>
-              <p className="text-3xl font-bold text-purple-600">{stats.completedProjects}</p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            {[
+              { title: 'Total Internships', value: stats.students, color: 'blue-600' },
+              { title: 'Active Interns', value: stats.activeInterns, color: 'emerald-600' },
+              { title: 'Completed Projects', value: stats.completedProjects, color: 'purple-600' },
+            ].map((stat, index) => (
+              <div
+                key={index}
+                className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm bg-opacity-80"
+              >
+                <h2 className="text-xs sm:text-sm font-medium text-gray-600 mb-2">{stat.title}</h2>
+                <p className="text-2xl sm:text-3xl font-bold text-center" style={{ color: `var(--${stat.color})` }}>
+                  {stat.value}
+                </p>
+              </div>
+            ))}
           </div>
 
           {/* Tabs */}
           <div className="bg-white rounded-xl shadow-sm backdrop-blur-sm bg-opacity-80">
             <div className="border-b border-gray-200">
-              <nav className="flex space-x-4 px-6 pt-4">
-                <button
-                  className={`px-4 py-2 text-sm font-medium transition-all duration-300 flex items-center ${activeTab === 'interns' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-blue-600'}`}
-                  onClick={() => setActiveTab('interns')}
-                >
-                  <FontAwesomeIcon icon={faGraduationCap} className="mr-2" />
-                  Interns
-                </button>
-                <button
-                  className={`px-4 py-2 text-sm font-medium transition-all duration-300 flex items-center ${activeTab === 'projects' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-blue-600'}`}
-                  onClick={() => setActiveTab('projects')}
-                >
-                  <FontAwesomeIcon icon={faProjectDiagram} className="mr-2" />
-                  Projects
-                </button>
+              <nav className="flex space-x-2 sm:space-x-4 px-4 sm:px-6 pt-4 overflow-x-auto">
+                {['interns', 'projects'].map(tab => (
+                  <button
+                    key={tab}
+                    className={`px-3 sm:px-4 py-2 text-sm font-medium transition-all duration-300 flex items-center whitespace-nowrap ${
+                      activeTab === tab ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-blue-600'
+                    }`}
+                    onClick={() => setActiveTab(tab)}
+                  >
+                    <FontAwesomeIcon icon={tab === 'interns' ? faGraduationCap : faProjectDiagram} className="mr-2" />
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
               </nav>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {activeTab === 'interns' && (
                 <>
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">Intern Management</h2>
-                    <div className="flex space-x-3 items-center">
-                      <div className="relative">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-4">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Intern Management</h2>
+                    <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                      <div className="relative w-full sm:w-64">
                         <FontAwesomeIcon
                           icon={faSearch}
                           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -693,139 +687,123 @@ function Dashboard() {
                           placeholder="Search by name, email, or username"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-64"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                         />
                       </div>
-                      <button
-                        onClick={openAddInternForm}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center"
-                      >
-                        <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                        Add Intern
-                      </button>
-                      <button
-                        onClick={() => setShowPastInterns(!showPastInterns)}
-                        className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all duration-300 flex items-center"
-                      >
-                        {showPastInterns ? (
-                          <>
-                            <FontAwesomeIcon icon={faAngleUp} className="mr-2" />
-                            Hide Past Interns
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon icon={faAngleDown} className="mr-2" />
-                            Show Past Interns
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={downloadInternsCSV}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center"
-                      >
-                        <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                        Download CSV
-                      </button>
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={openAddInternForm}
+                          className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center text-sm"
+                        >
+                          <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                          Add Intern
+                        </button>
+                        <button
+                          onClick={() => setShowPastInterns(!showPastInterns)}
+                          className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-all duration-300 flex items-center text-sm"
+                        >
+                          {showPastInterns ? (
+                            <>
+                              <FontAwesomeIcon icon={faAngleUp} className="mr-2" />
+                              Hide Past Interns
+                            </>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon icon={faAngleDown} className="mr-2" />
+                              Show Past Interns
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={downloadInternsCSV}
+                          className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center text-sm"
+                        >
+                          <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                          Download CSV
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* Desktop Table */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Current Interns</h3>
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Week</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          {['No.', 'Name', 'Email', 'Department', 'Domain', 'Week', 'Attendance', 'Actions'].map((header, index) => (
+                            <th key={index} className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              {header}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {filteredInterns.length > 0 ? (
                           filteredInterns.map((intern, index) => (
                             <tr key={intern._id} className="hover:bg-gray-50 transition-all duration-200">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{index + 1}</td>
+                              <td className="px-4 sm:px-6 py-4">
                                 <div className="flex items-center">
-                                  <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                                  <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm">
                                     {intern.name ? intern.name.charAt(0).toUpperCase() : 'S'}
                                   </div>
-                                  <div className="ml-4">
+                                  <div className="ml-3 sm:ml-4">
                                     <div className="text-sm font-medium text-gray-900">{intern.name}</div>
                                     <div className="text-xs text-gray-500">{intern.student?.username || intern.username}</div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.email}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.student?.department || 'N/A'}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.student?.domain || 'N/A'}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.student?.week || 'N/A'}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.email}</td>
+                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.student?.department || 'N/A'}</td>
+                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.student?.domain || 'N/A'}</td>
+                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.student?.week || 'N/A'}</td>
+                              <td className="px-4 sm:px-6 py-4">
                                 <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleRecordAttendance(intern._id, 'Present')}
-                                    className="p-2 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 transition-all duration-200"
-                                    title="Mark Present"
-                                  >
-                                    <FontAwesomeIcon icon={faCheckCircle} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleRecordAttendance(intern._id, 'Absent')}
-                                    className="p-2 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-all duration-200"
-                                    title="Mark Absent"
-                                  >
-                                    <FontAwesomeIcon icon={faTimesCircle} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleRecordAttendance(intern._id, 'Late')}
-                                    className="p-2 rounded-full bg-amber-500 text-white hover:bg-amber-600 transition-all duration-200"
-                                    title="Mark Late"
-                                  >
-                                    <FontAwesomeIcon icon={faExclamationTriangle} />
-                                  </button>
+                                  {['Present', 'Absent', 'Late'].map(status => (
+                                    <button
+                                      key={status}
+                                      onClick={() => handleRecordAttendance(intern._id, status)}
+                                      className={`p-2 rounded-full text-white transition-all duration-200 ${
+                                        status === 'Present' ? 'bg-emerald-500 hover:bg-emerald-600' :
+                                        status === 'Absent' ? 'bg-rose-500 hover:bg-rose-600' :
+                                        'bg-amber-500 hover:bg-amber-600'
+                                      }`}
+                                      title={`Mark ${status}`}
+                                    >
+                                      <FontAwesomeIcon icon={
+                                        status === 'Present' ? faCheckCircle :
+                                        status === 'Absent' ? faTimesCircle :
+                                        faExclamationTriangle
+                                      } />
+                                    </button>
+                                  ))}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <td className="px-4 sm:px-6 py-4 text-sm font-medium">
                                 <div className="flex space-x-3">
-                                  <button
-                                    onClick={() => openViewInternModal(intern)}
-                                    className="text-blue-600 hover:text-blue-800 transition-all duration-200"
-                                    title="View Details"
-                                  >
-                                    <FontAwesomeIcon icon={faEye} />
-                                  </button>
-                                  <button
-                                    onClick={() => openEditInternForm(intern)}
-                                    className="text-emerald-600 hover:text-emerald-800 transition-all duration-200"
-                                    title="Edit Intern"
-                                  >
-                                    <FontAwesomeIcon icon={faPencilAlt} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteIntern(intern._id)}
-                                    className="text-rose-600 hover:text-rose-800 transition-all duration-200"
-                                    title="Delete Intern"
-                                  >
-                                    <FontAwesomeIcon icon={faTrash} />
-                                  </button>
-                                  <button
-                                    onClick={() => openMessageModal(intern)}
-                                    className="text-purple-600 hover:text-purple-800 transition-all duration-200"
-                                    title="Send Message"
-                                  >
-                                    <FontAwesomeIcon icon={faClipboardList} />
-                                  </button>
+                                  {[
+                                    { action: () => openViewInternModal(intern), icon: faEye, color: 'blue-600', hover: 'blue-800', title: 'View Details' },
+                                    { action: () => openEditInternForm(intern), icon: faPencilAlt, color: 'emerald-600', hover: 'emerald-800', title: 'Edit Intern' },
+                                    { action: () => handleDeleteIntern(intern._id), icon: faTrash, color: 'rose-600', hover: 'rose-800', title: 'Delete Intern' },
+                                    { action: () => openMessageModal(intern), icon: faClipboardList, color: 'purple-600', hover: 'purple-800', title: 'Send Message' },
+                                  ].map(({ action, icon, color, hover, title }, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={action}
+                                      className={`text-${color} hover:text-${hover} transition-all duration-200`}
+                                      title={title}
+                                    >
+                                      <FontAwesomeIcon icon={icon} />
+                                    </button>
+                                  ))}
                                 </div>
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="8" className="px-6 py-4 text-center text-gray-600">
+                            <td colSpan="8" className="px-4 sm:px-6 py-4 text-center text-gray-600 text-sm">
                               {searchQuery ? 'No interns match your search.' : 'No interns found.'}
                             </td>
                           </tr>
@@ -834,71 +812,187 @@ function Dashboard() {
                     </table>
                   </div>
 
+                  {/* Mobile Cards */}
+                  <div className="sm:hidden space-y-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Current Interns</h3>
+                    {filteredInterns.length > 0 ? (
+                      filteredInterns.map((intern, index) => (
+                        <div key={intern._id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                          <div className="flex items-center mb-3">
+                            <div className="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm">
+                              {intern.name ? intern.name.charAt(0).toUpperCase() : 'S'}
+                            </div>
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-900">{intern.name}</div>
+                              <div className="text-xs text-gray-500">{intern.student?.username || intern.username}</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                            <div><span className="font-medium">Email:</span> {intern.email}</div>
+                            <div><span className="font-medium">Department:</span> {intern.student?.department || 'N/A'}</div>
+                            <div><span className="font-medium">Domain:</span> {intern.student?.domain || 'N/A'}</div>
+                            <div><span className="font-medium">Week:</span> {intern.student?.week || 'N/A'}</div>
+                          </div>
+                          <div className="mt-3">
+                            <span className="font-medium text-sm text-gray-700">Attendance:</span>
+                            <div className="flex space-x-2 mt-2">
+                              {['Present', 'Absent', 'Late'].map(status => (
+                                <button
+                                  key={status}
+                                  onClick={() => handleRecordAttendance(intern._id, status)}
+                                  className={`p-2 rounded-full text-white transition-all duration-200 ${
+                                    status === 'Present' ? 'bg-emerald-500 hover:bg-emerald-600' :
+                                    status === 'Absent' ? 'bg-rose-500 hover:bg-rose-600' :
+                                    'bg-amber-500 hover:bg-amber-600'
+                                  }`}
+                                  title={`Mark ${status}`}
+                                >
+                                  <FontAwesomeIcon icon={
+                                    status === 'Present' ? faCheckCircle :
+                                    status === 'Absent' ? faTimesCircle :
+                                    faExclamationTriangle
+                                  } />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="mt-3 flex space-x-3">
+                            {[
+                              { action: () => openViewInternModal(intern), icon: faEye, color: 'blue-600', hover: 'blue-800', title: 'View Details' },
+                              { action: () => openEditInternForm(intern), icon: faPencilAlt, color: 'emerald-600', hover: 'emerald-800', title: 'Edit Intern' },
+                              { action: () => handleDeleteIntern(intern._id), icon: faTrash, color: 'rose-600', hover: 'rose-800', title: 'Delete Intern' },
+                              { action: () => openMessageModal(intern), icon: faClipboardList, color: 'purple-600', hover: 'purple-800', title: 'Send Message' },
+                            ].map(({ action, icon, color, hover, title }, idx) => (
+                              <button
+                                key={idx}
+                                onClick={action}
+                                className={`text-${color} hover:text-${hover} transition-all duration-200`}
+                                title={title}
+                              >
+                                <FontAwesomeIcon icon={icon} />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-600 text-sm">
+                        {searchQuery ? 'No interns match your search.' : 'No interns found.'}
+                      </div>
+                    )}
+                  </div>
+
                   {showPastInterns && (
-                    <div className="mt-8">
+                    <div className="mt-6 sm:mt-8">
                       <h3 className="text-lg font-medium text-gray-900 mb-4">Past Interns</h3>
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Final Progress</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Removed On</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {pastInterns.length > 0 ? (
-                            pastInterns.map((intern) => (
-                              <tr key={intern._id} className="hover:bg-gray-50 transition-all duration-200">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600">
-                                      {intern.name ? intern.name.charAt(0).toUpperCase() : 'S'}
+                      {/* Desktop Past Interns Table */}
+                      <div className="hidden sm:block overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              {['Name', 'Email', 'Final Progress', 'Removed On', 'Projects'].map((header, index) => (
+                                <th key={index} className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {pastInterns.length > 0 ? (
+                              pastInterns.map((intern) => (
+                                <tr key={intern._id} className="hover:bg-gray-50 transition-all duration-200">
+                                  <td className="px-4 sm:px-6 py-4">
+                                    <div className="flex items-center">
+                                      <div className="flex-shrink-0 h-8 sm:h-10 sm:w-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600">
+                                        {intern.name ? intern.name.charAt(0).toUpperCase() : 'S'}
+                                      </div>
+                                      <div className="ml-3 sm:ml-4">
+                                        <div className="text-sm font-medium text-gray-900">{intern.name}</div>
+                                      </div>
                                     </div>
-                                    <div className="ml-4">
-                                      <div className="text-sm font-medium text-gray-900">{intern.name}</div>
+                                  </td>
+                                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.email}</td>
+                                  <td className="px-4 sm:px-6 py-4">
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                      <div
+                                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                        style={{ width: `${intern.progress || 0}%` }}
+                                      ></div>
                                     </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{intern.email}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                    <div
-                                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                                      style={{ width: `${intern.progress || 0}%` }}
-                                    ></div>
-                                  </div>
-                                  <span className="text-xs text-gray-500">{intern.progress || 0}%</span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                  {formatDate(intern.deletedAt)}
-                                </td>
-                                <td className="px-6 py-4">
-                                  {intern.deletedProjects && intern.deletedProjects.length > 0 ? (
-                                    <ul className="list-disc pl-5 max-h-32 overflow-y-auto">
-                                      {intern.deletedProjects.map((project, idx) => (
-                                        <li key={idx} className="text-sm text-gray-600">
-                                          {project.title}
-                                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${getStatusClass(project.status)}`}>
-                                            {project.status}
-                                          </span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <span className="text-gray-500 text-sm">No projects</span>
-                                  )}
+                                    <span className="text-xs text-gray-500">{intern.progress || 0}%</span>
+                                  </td>
+                                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">
+                                    {formatDate(intern.deletedAt)}
+                                  </td>
+                                  <td className="px-4 sm:px-6 py-4">
+                                    {intern.deletedProjects && intern.deletedProjects.length > 0 ? (
+                                      <ul className="list-disc pl-5 max-h-32 overflow-y-auto">
+                                        {intern.deletedProjects.map((project, idx) => (
+                                          <li key={idx} className="text-sm text-gray-600">
+                                            {project.title}
+                                            <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${getStatusClass(project.status)}`}>
+                                              {project.status}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <span className="text-gray-500 text-sm">No projects</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan="5" className="px-4 sm:px-6 py-4 text-center text-gray-600 text-sm">
+                                  No past interns found.
                                 </td>
                               </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="5" className="px-6 py-4 text-center text-gray-600">No past interns found.</td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      {/* Mobile Past Interns Cards */}
+                      <div className="sm:hidden space-y-4">
+                        {pastInterns.length > 0 ? (
+                          pastInterns.map((intern) => (
+                            <div key={intern._id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                              <div className="flex items-center mb-3">
+                                <div className="flex-shrink-0 h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600">
+                                  {intern.name ? intern.name.charAt(0).toUpperCase() : 'S'}
+                                </div>
+                                <div className="ml-3">
+                                  <div className="text-sm font-medium text-gray-900">{intern.name}</div>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                <div><span className="font-medium">Email:</span> {intern.email}</div>
+                                <div><span className="font-medium">Progress:</span> {intern.progress || 0}%</div>
+                                <div><span className="font-medium">Removed On:</span> {formatDate(intern.deletedAt)}</div>
+                              </div>
+                              <div className="mt-3">
+                                <span className="font-medium text-sm text-gray-700">Projects:</span>
+                                {intern.deletedProjects && intern.deletedProjects.length > 0 ? (
+                                  <ul className="list-disc pl-5 mt-2 text-sm text-gray-600">
+                                    {intern.deletedProjects.map((project, idx) => (
+                                      <li key={idx}>
+                                        {project.title}
+                                        <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${getStatusClass(project.status)}`}>
+                                          {project.status}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-gray-500 text-sm mt-2">No projects</p>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center text-gray-600 text-sm">No past interns found.</div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </>
@@ -906,23 +1000,24 @@ function Dashboard() {
 
               {activeTab === 'projects' && (
                 <>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Project Management</h2>
-                  <div className="overflow-x-auto">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Project Management</h2>
+                  {/* Desktop Projects Table */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Title</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          {['Project Title', 'Status', 'Assigned To', 'Last Updated', 'Actions'].map((header, index) => (
+                            <th key={index} className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              {header}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {projects.length > 0 ? (
                           projects.map((project) => (
                             <tr key={project._id} className="hover:bg-gray-50 transition-all duration-200">
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-4 sm:px-6 py-4">
                                 <div className="text-sm font-medium text-gray-900">{project.title}</div>
                                 <div className="text-xs text-gray-500">
                                   {project.description && project.description.length > 50
@@ -930,12 +1025,12 @@ function Dashboard() {
                                     : formatTaskText(project.description) || 'No description'}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-4 sm:px-6 py-4">
                                 <span className={`px-2 py-1 text-xs rounded-full ${getStatusClass(project.status)}`}>
                                   {project.status}
                                 </span>
                               </td>
-                              <td className="px-6 py-4">
+                              <td className="px-4 sm:px-6 py-4">
                                 {project.assignedTo?.length > 0 ? (
                                   <ul className="list-disc pl-5">
                                     {project.assignedTo.map((student, index) => (
@@ -950,13 +1045,13 @@ function Dashboard() {
                                   <span className="text-sm text-gray-500">Not assigned</span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">
                                 {formatDate(project.lastModified || project.updatedAt)}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <td className="px-4 sm:px-6 py-4 text-sm font-medium">
                                 <button
                                   onClick={() => openProjectModal(project)}
-                                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300"
+                                  className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 text-sm"
                                 >
                                   <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
                                   Manage
@@ -966,11 +1061,59 @@ function Dashboard() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="5" className="px-6 py-4 text-center text-gray-600">No projects found.</td>
+                            <td colSpan="5" className="px-4 sm:px-6 py-4 text-center text-gray-600 text-sm">
+                              No projects found.
+                            </td>
                           </tr>
                         )}
                       </tbody>
                     </table>
+                  </div>
+                  {/* Mobile Projects Cards */}
+                  <div className="sm:hidden space-y-4">
+                    {projects.length > 0 ? (
+                      projects.map((project) => (
+                        <div key={project._id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                          <div className="text-sm font-medium text-gray-900 mb-2">{project.title}</div>
+                          <div className="text-xs text-gray-500 mb-2">
+                            {project.description && project.description.length > 50
+                              ? `${formatTaskText(project.description.slice(0, 50))}...`
+                              : formatTaskText(project.description) || 'No description'}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                            <div><span className="font-medium">Status:</span> {project.status}</div>
+                            <div><span className="font-medium">Last Updated:</span> {formatDate(project.lastModified || project.updatedAt)}</div>
+                          </div>
+                          <div className="mt-3">
+                            <span className="font-medium text-sm text-gray-700">Assigned To:</span>
+                            {project.assignedTo?.length > 0 ? (
+                              <ul className="list-disc pl-5 mt-2 text-sm text-gray-600">
+                                {project.assignedTo.map((student, index) => (
+                                  <li key={index}>
+                                    {typeof student === 'string'
+                                      ? (interns.find(i => i._id === student)?.name || student)
+                                      : student.name}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-gray-500 text-sm mt-2">Not assigned</p>
+                            )}
+                          </div>
+                          <div className="mt-3">
+                            <button
+                              onClick={() => openProjectModal(project)}
+                              className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 w-full text-sm"
+                            >
+                              <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
+                              Manage
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-600 text-sm">No projects found.</div>
+                    )}
                   </div>
                 </>
               )}
@@ -980,10 +1123,10 @@ function Dashboard() {
 
         {/* Add/Edit Intern Modal */}
         {showAddInternForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-8 w-full max-w-lg shadow-2xl backdrop-blur-sm bg-opacity-95">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{selectedIntern ? 'Edit Intern' : 'Add New Intern'}</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-sm bg-opacity-95">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{selectedIntern ? 'Edit Intern' : 'Add New Intern'}</h2>
                 <button
                   onClick={() => {
                     setShowAddInternForm(false);
@@ -1004,65 +1147,39 @@ function Dashboard() {
               </div>
 
               <form onSubmit={selectedIntern ? handleUpdateIntern : handleAddIntern}>
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={newIntern.name}
-                    onChange={(e) => setNewIntern({ ...newIntern, name: e.target.value })}
-                    required
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
+                {[
+                  { label: 'Name', type: 'text', value: newIntern.name, onChange: (e) => setNewIntern({ ...newIntern, name: e.target.value }), required: true },
+                  { label: 'Email', type: 'email', value: newIntern.email, onChange: (e) => setNewIntern({ ...newIntern, email: e.target.value }), required: true },
+                  { label: 'Duration (months)', type: 'number', min: '1', value: newIntern.duration, onChange: (e) => setNewIntern({ ...newIntern, duration: parseInt(e.target.value) }), required: true },
+                  { label: 'Tasks (comma separated)', type: 'textarea', value: newIntern.tasks, onChange: (e) => setNewIntern({ ...newIntern, tasks: e.target.value }) },
+                  { label: 'Username', type: 'text', value: newIntern.username, onChange: (e) => setNewIntern({ ...newIntern, username: e.target.value }), required: true },
+                ].map((field, index) => (
+                  <div key={index} className="mb-4 sm:mb-5">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{field.label}</label>
+                    {field.type === 'textarea' ? (
+                      <textarea
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                        rows="4"
+                      />
+                    ) : (
+                      <input
+                        type={field.type}
+                        min={field.min}
+                        value={field.value}
+                        onChange={field.onChange}
+                        required={field.required}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                      />
+                    )}
+                  </div>
+                ))}
 
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={newIntern.email}
-                    onChange={(e) => setNewIntern({ ...newIntern, email: e.target.value })}
-                    required
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (months)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={newIntern.duration}
-                    onChange={(e) => setNewIntern({ ...newIntern, duration: parseInt(e.target.value) })}
-                    required
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tasks (comma separated)</label>
-                  <textarea
-                    value={newIntern.tasks}
-                    onChange={(e) => setNewIntern({ ...newIntern, tasks: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    rows="4"
-                  />
-                </div>
-
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                  <input
-                    type="text"
-                    value={newIntern.username}
-                    onChange={(e) => setNewIntern({ ...newIntern, username: e.target.value })}
-                    required
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-
-                <div className="mb-5">
+                <div className="mb-4 sm:mb-5">
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      {selectedIntern ? "New Password (optional)" : "Password"}
+                      {selectedIntern ? 'New Password (optional)' : 'Password'}
                     </label>
                     {selectedIntern && (
                       <button
@@ -1070,7 +1187,7 @@ function Dashboard() {
                         onClick={() => setShowPasswordField(!showPasswordField)}
                         className="text-xs text-blue-600 hover:text-blue-800 transition-all duration-200"
                       >
-                        {showPasswordField ? "Hide Password" : "Change Password"}
+                        {showPasswordField ? 'Hide Password' : 'Change Password'}
                       </button>
                     )}
                   </div>
@@ -1080,18 +1197,18 @@ function Dashboard() {
                       value={newIntern.password}
                       onChange={(e) => setNewIntern({ ...newIntern, password: e.target.value })}
                       required={!selectedIntern}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                     />
                   )}
                 </div>
 
-                <div className="mb-5">
+                <div className="mb-4 sm:mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Resume (PDF)</label>
                   <input
                     type="file"
                     onChange={(e) => setInternFile(e.target.files[0])}
                     accept=".pdf"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm"
                   />
                 </div>
 
@@ -1102,13 +1219,13 @@ function Dashboard() {
                       setShowAddInternForm(false);
                       setSelectedIntern(null);
                     }}
-                    className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-all duration-300"
+                    className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-gray-700 transition-all duration-300 text-sm"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300"
+                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 text-sm"
                   >
                     {selectedIntern ? 'Update Intern' : 'Add Intern'}
                   </button>
@@ -1120,10 +1237,10 @@ function Dashboard() {
 
         {/* View Intern Modal */}
         {selectedIntern && viewInternModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-sm bg-opacity-95">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{selectedIntern.name}</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-sm bg-opacity-95">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{selectedIntern.name}</h2>
                 <button
                   onClick={() => setViewInternModalOpen(false)}
                   className="text-gray-500 hover:text-gray-700 transition-all duration-200"
@@ -1132,20 +1249,26 @@ function Dashboard() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Email:</span> {selectedIntern.email}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Username:</span> {selectedIntern.student?.username || selectedIntern.username}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Department:</span> {selectedIntern.student?.department || 'N/A'}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Domain:</span> {selectedIntern.student?.domain || 'N/A'}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Week:</span> {selectedIntern.student?.week || 'N/A'}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Program:</span> {selectedIntern.student?.program || 'N/A'}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">University:</span> {selectedIntern.student?.university || selectedIntern.university || 'N/A'}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Contact Number:</span> {selectedIntern.student?.contactNumber || 'N/A'}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Bio:</span> {selectedIntern.student?.bio || 'N/A'}</p>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-medium">Duration:</span> {selectedIntern.duration} months</p>
-                  <p className="text-sm text-gray-600"><span className="font-medium">Last Active:</span> {formatDate(selectedIntern.lastActive)}</p>
+                  {[
+                    { label: 'Email', value: selectedIntern.email },
+                    { label: 'Username', value: selectedIntern.student?.username || selectedIntern.username },
+                    { label: 'Department', value: selectedIntern.student?.department || 'N/A' },
+                    { label: 'Domain', value: selectedIntern.student?.domain || 'N/A' },
+                    { label: 'Week', value: selectedIntern.student?.week || 'N/A' },
+                    { label: 'Program', value: selectedIntern.student?.program || 'N/A' },
+                    { label: 'University', value: selectedIntern.student?.university || selectedIntern.university || 'N/A' },
+                    { label: 'Contact Number', value: selectedIntern.student?.contactNumber || 'N/A' },
+                    { label: 'Bio', value: selectedIntern.student?.bio || 'N/A' },
+                    { label: 'Duration', value: `${selectedIntern.duration} months` },
+                    { label: 'Last Active', value: formatDate(selectedIntern.lastActive) },
+                  ].map((item, index) => (
+                    <p key={index} className="text-sm text-gray-600 mb-2">
+                      <span className="font-medium">{item.label}:</span> {item.value}
+                    </p>
+                  ))}
                 </div>
 
                 <div>
@@ -1156,11 +1279,13 @@ function Dashboard() {
                       style={{ width: `${calculateProgress(selectedIntern)}%` }}
                     ></div>
                   </div>
-                  <p className="text-sm text-gray-600"><span className="font-medium">Progress:</span> {calculateProgress(selectedIntern)}%</p>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Progress:</span> {calculateProgress(selectedIntern)}%
+                  </p>
                 </div>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Assigned Tasks</h3>
                 {selectedIntern.tasks && selectedIntern.tasks.length > 0 ? (
                   <ul className="list-disc pl-6 text-sm text-gray-600">
@@ -1197,7 +1322,7 @@ function Dashboard() {
               </div>
 
               {selectedIntern.assignedProjects && selectedIntern.assignedProjects.length > 0 && (
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Assigned Projects</h3>
                   <div className="space-y-4">
                     {selectedIntern.assignedProjects.map((project, index) => (
@@ -1216,47 +1341,54 @@ function Dashboard() {
               )}
 
               {selectedIntern.attendance && selectedIntern.attendance.length > 0 && (
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Recent Attendance</h3>
-                  <div className="overflow-x-auto">
+                  {/* Desktop Attendance Table */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                          {['Date', 'Status', 'Time In', 'Notes'].map((header, index) => (
+                            <th key={index} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              {header}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {selectedIntern.attendance.slice().reverse().slice(0, 5).map((record, index) => (
                           <tr key={index}>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {formatDate(record.date)}
-                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{formatDate(record.date)}</td>
                             <td className="px-4 py-3">
-                              <span
-                                className={`px-2 py-1 text-xs rounded-full ${getStatusClass(record.status)}`}
-                              >
+                              <span className={`px-2 py-1 text-xs rounded-full ${getStatusClass(record.status)}`}>
                                 {record.status}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {record.timeIn || 'N/A'}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {record.notes || 'N/A'}
-                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{record.timeIn || 'N/A'}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{record.notes || 'N/A'}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+                  {/* Mobile Attendance Cards */}
+                  <div className="sm:hidden space-y-4">
+                    {selectedIntern.attendance.slice().reverse().slice(0, 5).map((record, index) => (
+                      <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                          <div><span className="font-medium">Date:</span> {formatDate(record.date)}</div>
+                          <div><span className="font-medium">Status:</span> {record.status}</div>
+                          <div><span className="font-medium">Time In:</span> {record.timeIn || 'N/A'}</div>
+                          <div><span className="font-medium">Notes:</span> {record.notes || 'N/A'}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {selectedIntern.progressUpdates && selectedIntern.progressUpdates.length > 0 && (
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Progress Updates</h3>
                   <div className="space-y-4 max-h-60 overflow-y-auto">
                     {selectedIntern.progressUpdates.slice().reverse().map((update, index) => (
@@ -1278,10 +1410,10 @@ function Dashboard() {
 
         {/* Message Modal */}
         {selectedIntern && showMessageModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-8 w-full max-w-lg shadow-2xl backdrop-blur-sm bg-opacity-95">
-              <div className="flex justify-between mb-6 items-center-center-center">
-                <h2 className="text-2xl font-bold text-gray-900">Send Message to {selectedIntern.name}</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-sm bg-opacity-95">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Send Message to {selectedIntern.name}</h2>
                 <button
                   onClick={() => setShowMessageModal(false)}
                   className="text-gray-500 hover:text-gray-700 transition-all duration-200"
@@ -1290,12 +1422,12 @@ function Dashboard() {
                 </button>
               </div>
 
-              <div className="mb-5">
+              <div className="mb-4 sm:mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                   rows="5"
                   placeholder="Enter your message here..."
                 />
@@ -1304,13 +1436,13 @@ function Dashboard() {
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setShowMessageModal(false)}
-                  className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-all duration-300"
+                  className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-gray-700 transition-all duration-300 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSendMessage}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300"
+                  className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 text-sm"
                   disabled={!message.trim()}
                 >
                   Send Message
@@ -1322,10 +1454,10 @@ function Dashboard() {
 
         {/* Project Modal */}
         {selectedProject && showProjectModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-sm bg-opacity-95">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{selectedProject.title}</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-full sm:max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl backdrop-blur-sm bg-opacity-95">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{selectedProject.title}</h2>
                 <button
                   onClick={() => setShowProjectModal(false)}
                   className="text-gray-500 hover:text-gray-700 transition-all duration-200"
@@ -1334,56 +1466,40 @@ function Dashboard() {
                 </button>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${getStatusClass(selectedProject.status)}`}>
                   Current Status: {selectedProject.status}
                 </span>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
                 <p className="bg-gray-50 p-4 rounded-lg text-gray-600 text-sm">{formatTaskText(selectedProject.description) || 'No description available.'}</p>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Change Status</h3>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => handleUpdateProjectStatus(selectedProject._id, 'In Progress')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedProject.status === 'In Progress'
-                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                <div className="flex flex-wrap gap-3">
+                  {['In Progress', 'Completed', 'Incomplete'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => handleUpdateProjectStatus(selectedProject._id, status)}
+                      className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium ${
+                        selectedProject.status === status
+                          ? `bg-${status === 'In Progress' ? 'blue' : status === 'Completed' ? 'emerald' : 'amber'}-100 text-${status === 'In Progress' ? 'blue' : status === 'Completed' ? 'emerald' : 'amber'}-800 border border-${status === 'In Progress' ? 'blue' : status === 'Completed' ? 'emerald' : 'amber'}-200`
+                          : `bg-${status === 'In Progress' ? 'blue' : status === 'Completed' ? 'emerald' : 'amber'}-600 text-white hover:bg-${status === 'In Progress' ? 'blue' : status === 'Completed' ? 'emerald' : 'amber'}-700`
                       } transition-all duration-300`}
-                    disabled={selectedProject.status === 'In Progress'}
-                  >
-                    In Progress
-                  </button>
-                  <button
-                    onClick={() => handleUpdateProjectStatus(selectedProject._id, 'Completed')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedProject.status === 'Completed'
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      } transition-all duration-300`}
-                    disabled={selectedProject.status === 'Completed'}
-                  >
-                    Completed
-                  </button>
-                  <button
-                    onClick={() => handleUpdateProjectStatus(selectedProject._id, 'Incomplete')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedProject.status === 'Incomplete'
-                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                        : 'bg-amber-600 text-white hover:bg-amber-700'
-                      } transition-all duration-300`}
-                    disabled={selectedProject.status === 'Incomplete'}
-                  >
-                    Incomplete
-                  </button>
+                      disabled={selectedProject.status === status}
+                    >
+                      {status}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Assigned Interns</h3>
-                {projects.assignedTo?.length > 0 ? (
+                {selectedProject.assignedTo?.length > 0 ? (
                   <ul className="list-disc list-inside text-sm text-gray-600">
                     {selectedProject.assignedTo.map((intern, index) => (
                       <li key={index} className="mb-2">
@@ -1399,7 +1515,7 @@ function Dashboard() {
               </div>
 
               {selectedProject.feedback && selectedProject.feedback.length > 0 && (
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Feedback History</h3>
                   <div className="space-y-4 max-h-40 overflow-y-auto">
                     {selectedProject.feedback.slice().reverse().map((item, index) => (
@@ -1416,7 +1532,7 @@ function Dashboard() {
               )}
 
               {selectedProject.tasks && selectedProject.tasks.length > 0 && (
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Project Tasks</h3>
                   <ul className="list-disc pl-6 text-sm text-gray-600">
                     {selectedProject.tasks.map((task, index) => (
@@ -1430,12 +1546,12 @@ function Dashboard() {
                 </div>
               )}
 
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Add Feedback</h3>
                 <textarea
                   value={projectFeedback}
                   onChange={(e) => setProjectFeedback(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                   rows="4"
                   placeholder="Enter feedback for the project..."
                 />
@@ -1482,7 +1598,7 @@ function Dashboard() {
                         setLoading(false);
                       }
                     }}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300"
+                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 text-sm"
                     disabled={!projectFeedback.trim()}
                   >
                     Add Feedback
