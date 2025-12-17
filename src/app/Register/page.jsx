@@ -392,7 +392,7 @@ export default function InternshipPortal() {
         profilePic: formData.profilePic ? formData.profilePic.name : null,
       };
 
-      const response = await fetch('http://localhost:5000/api/student/register', {
+      const response = await fetch('https://backend-internship-portal.vercel.app/api/student/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
