@@ -21,7 +21,7 @@
     "html5-qrcode": "^2.3.8",
     "lottie-react": "^2.4.1",
     "mongoose": "^8.12.1",
-    "next": "15.2.1",
+    "next": "^15.2.2",
     "qrcode-reader": "^1.0.4",
     "react": "^19.0.0",
     "react-datepicker": "^8.3.0",
@@ -32,7 +32,7 @@
     "react-redux": "^9.2.0",
     "react-toastify": "^11.0.5",
     "redux": "^5.0.1",
-    "three.js": "^0.77.1"
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -40,7 +40,7 @@
     "@types/node": "22.15.3",
     "@types/react": "19.1.2",
     "eslint": "^9",
-    "eslint-config-next": "15.2.1",
+    "eslint-config-next": "^15.2.2",
     "tailwindcss": "^4"
   }
 }
