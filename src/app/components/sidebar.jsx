@@ -12,6 +12,9 @@ import {
   faChartLine,
   faBars,
   faTimes,
+  faPaperPlane,
+
+  faClipboardList
 } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -47,8 +50,9 @@ export default function Sidebar() {
         { name: 'interns', label: 'Certification', icon: faGraduationCap, link: '/Admin/certification' },
         { name: 'projects', label: 'Projects', icon: faProjectDiagram, link: '/Admin/projects' },
         { name: 'past-interns', label: 'Past Interns', icon: faHistory, link: '/Admin/past-interns' },
-        { name: 'activities', label: 'Recent Activities', icon: faHistory, link: '/Admin/activities' },
+        { name: 'activities', label: 'Recent Activities', icon: faClipboardList, link: '/Admin/activities' },
         { name: 'Attendance', label: 'Attendance', icon: faCog, link: '/Admin/studentManagment' },
+         { name: 'Requests', label: 'Requests', icon: faPaperPlane, link: '/Admin/pending-students' },
       ];
 
   return (
