@@ -375,44 +375,38 @@ function Dashboard() {
     }
   };
 
-  const handleDeleteIntern = async (internId) => {
-    if (!confirm('Are you sure you want to delete this intern?')) return;
+const handleDeleteIntern = async (internId) => {
+  if (!confirm('Are you sure you want to move this intern to past interns?')) return;
 
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
 
-      await axiosInstance.delete(`/api/interns/${internId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+    // ← Changed this line
+    await axiosInstance.post(`/api/interns/archive/${internId}`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-      const response = await axiosInstance.get('/api/interns', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+    // Refresh lists
+    const response = await axiosInstance.get('/api/interns', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const sortedInterns = sortInternsByCreatedAt(response.data);
+    setInterns(sortedInterns);
 
-      const sortedInterns = sortInternsByCreatedAt(response.data);
+    const pastResponse = await axiosInstance.get('/api/interns/past', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setPastInterns(pastResponse.data || []);
 
-      setInterns(sortedInterns);
-      setStats(prev => ({
-        ...prev,
-        students: response.data.length,
-        activeInterns: response.data.length
-      }));
-
-      const pastResponse = await axiosInstance.get('/api/interns/past', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setPastInterns(pastResponse.data || []);
-      alert('Intern moved to past interns successfully!');
-    } catch (error) {
-      console.error('Error deleting intern:', error);
-      alert(`Failed to delete intern: ${error.response?.data?.error || error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    alert('Intern moved to past interns successfully!');
+  } catch (error) {
+    console.error('Error archiving intern:', error);
+    alert(`Failed to archive intern: ${error.response?.data?.error || error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
   const handleSendMessage = async () => {
     if (!selectedIntern || !message.trim()) {
       alert('Please select an intern and enter a message');
@@ -726,91 +720,106 @@ function Dashboard() {
                   </div>
 
                   {/* Desktop Table */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Current Interns</h3>
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          {['No.', 'Name', 'Email', 'Department', 'Domain', 'Week', 'Attendance', 'Actions'].map((header, index) => (
-                            <th key={index} className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredInterns.length > 0 ? (
-                          filteredInterns.map((intern, index) => (
-                            <tr key={intern._id} className="hover:bg-gray-50 transition-all duration-200">
-                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{index + 1}</td>
-                              <td className="px-4 sm:px-6 py-4">
-                                <div className="flex items-center">
-                                  <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm">
-                                    {intern.name ? intern.name.charAt(0).toUpperCase() : 'S'}
-                                  </div>
-                                  <div className="ml-3 sm:ml-4">
-                                    <div className="text-sm font-medium text-gray-900">{intern.name}</div>
-                                    <div className="text-xs text-gray-500">{intern.student?.username || intern.username}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.email}</td>
-                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.student?.department || 'N/A'}</td>
-                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.student?.domain || 'N/A'}</td>
-                              <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{intern.student?.week || 'N/A'}</td>
-                              <td className="px-4 sm:px-6 py-4">
-                                <div className="flex space-x-2">
-                                  {['Present', 'Absent', 'Late'].map(status => (
-                                    <button
-                                      key={status}
-                                      onClick={() => handleRecordAttendance(intern._id, status)}
-                                      className={`p-2 rounded-full text-white transition-all duration-200 ${
-                                        status === 'Present' ? 'bg-emerald-500 hover:bg-emerald-600' :
-                                        status === 'Absent' ? 'bg-rose-500 hover:bg-rose-600' :
-                                        'bg-amber-500 hover:bg-amber-600'
-                                      }`}
-                                      title={`Mark ${status}`}
-                                    >
-                                      <FontAwesomeIcon icon={
-                                        status === 'Present' ? faCheckCircle :
-                                        status === 'Absent' ? faTimesCircle :
-                                        faExclamationTriangle
-                                      } />
-                                    </button>
-                                  ))}
-                                </div>
-                              </td>
-                              <td className="px-4 sm:px-6 py-4 text-sm font-medium">
-                                <div className="flex space-x-3">
-                                  {[
-                                    { action: () => openViewInternModal(intern), icon: faEye, color: 'blue-600', hover: 'blue-800', title: 'View Details' },
-                                    { action: () => openEditInternForm(intern), icon: faPencilAlt, color: 'emerald-600', hover: 'emerald-800', title: 'Edit Intern' },
-                                    { action: () => handleDeleteIntern(intern._id), icon: faTrash, color: 'rose-600', hover: 'rose-800', title: 'Delete Intern' },
-                                    { action: () => openMessageModal(intern), icon: faClipboardList, color: 'purple-600', hover: 'purple-800', title: 'Send Message' },
-                                  ].map(({ action, icon, color, hover, title }, idx) => (
-                                    <button
-                                      key={idx}
-                                      onClick={action}
-                                      className={`text-${color} hover:text-${hover} transition-all duration-200`}
-                                      title={title}
-                                    >
-                                      <FontAwesomeIcon icon={icon} />
-                                    </button>
-                                  ))}
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="8" className="px-4 sm:px-6 py-4 text-center text-gray-600 text-sm">
-                              {searchQuery ? 'No interns match your search.' : 'No interns found.'}
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+<div className="hidden sm:block">
+  <h3 className="text-base font-semibold text-gray-800 mb-3">
+    Current Interns
+  </h3>
+
+  <div className="border rounded-lg overflow-hidden bg-white">
+    <table className="w-full text-sm">
+      <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+        <tr>
+          <th className="px-4 py-3 text-left">#</th>
+          <th className="px-4 py-3 text-left">Intern</th>
+          <th className="px-4 py-3 text-left">Dept</th>
+          <th className="px-4 py-3 text-left">Domain</th>
+          <th className="px-4 py-3 text-left">Week</th>
+          <th className="px-4 py-3 text-left">Attendance</th>
+          <th className="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody className="divide-y">
+        {filteredInterns.length ? (
+          filteredInterns.map((intern, i) => (
+            <tr key={intern._id} className="hover:bg-gray-50">
+              <td className="px-4 py-3 text-gray-500">{i + 1}</td>
+
+              <td className="px-4 py-3">
+                <p className="font-medium text-gray-800">{intern.name}</p>
+                <p className="text-xs text-gray-500">{intern.email}</p>
+              </td>
+
+              <td className="px-4 py-3">
+                {intern.student?.department || '—'}
+              </td>
+
+              <td className="px-4 py-3">
+                {intern.student?.domain || '—'}
+              </td>
+
+              <td className="px-4 py-3">
+                {intern.student?.week || '—'}
+              </td>
+
+              {/* Attendance */}
+              <td className="px-4 py-3">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleRecordAttendance(intern._id, 'Present')}
+                    className="w-7 h-7 rounded bg-emerald-500 text-white hover:bg-emerald-600"
+                    title="Present"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={() => handleRecordAttendance(intern._id, 'Absent')}
+                    className="w-7 h-7 rounded bg-rose-500 text-white hover:bg-rose-600"
+                    title="Absent"
+                  >
+                    ✕
+                  </button>
+                  <button
+                    onClick={() => handleRecordAttendance(intern._id, 'Late')}
+                    className="w-7 h-7 rounded bg-amber-500 text-white hover:bg-amber-600"
+                    title="Late"
+                  >
+                    !
+                  </button>
+                </div>
+              </td>
+
+              {/* Actions */}
+              <td className="px-4 py-3 text-right">
+                <div className="flex justify-end gap-3 text-gray-500">
+                  <button onClick={() => openViewInternModal(intern)} title="View" className="hover:text-blue-600">
+                    <FontAwesomeIcon icon={faEye} />
+                  </button>
+                  <button onClick={() => openEditInternForm(intern)} title="Edit" className="hover:text-emerald-600">
+                    <FontAwesomeIcon icon={faPencilAlt} />
+                  </button>
+                  <button onClick={() => handleDeleteIntern(intern._id)} title="Delete" className="hover:text-rose-600">
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                  <button onClick={() => openMessageModal(intern)} title="Message" className="hover:text-purple-600">
+                    <FontAwesomeIcon icon={faClipboardList} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan="7" className="px-4 py-6 text-center text-gray-500">
+              No interns found
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
                   {/* Mobile Cards */}
                   <div className="sm:hidden space-y-4">
